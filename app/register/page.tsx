@@ -10,7 +10,7 @@ import { useAppStore } from "@/lib/hooks/use-store";
 import { useAuth } from "@/lib/hooks/use-auth";
 import { isDemoGoogleUser } from "@/lib/auth/identity";
 import { completeRegistration, isRegistrationComplete } from "@/lib/auth/registration";
-import { applyGoogleProfile, finishRegistration, getCurrentBusiness } from "@/lib/services/businesses";
+import { applyGoogleProfile, finishRegistration } from "@/lib/services/businesses";
 import { setLocale, useI18n } from "@/lib/i18n/provider";
 import type { Locale } from "@/lib/i18n/messages";
 import { Sun } from "lucide-react";
@@ -35,11 +35,8 @@ function RegisterInner() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
-  const business = getCurrentBusiness();
   const [step, setStep] = useState<"language" | "google" | "service">("language");
-  const [serviceName, setServiceName] = useState(
-    business.name === "STOM Clinic" ? "" : business.name,
-  );
+  const [serviceName, setServiceName] = useState("");
   const [chosen, setChosen] = useState<Locale>("uz");
   const [busy, setBusy] = useState(false);
   const error = params.get("error");
@@ -138,7 +135,7 @@ function RegisterInner() {
             <Input
               value={serviceName}
               onChange={(event) => setServiceName(event.target.value)}
-              placeholder={t.serviceNamePlaceholder}
+              placeholder=""
               autoFocus
             />
           </div>
