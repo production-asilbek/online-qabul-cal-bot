@@ -2,12 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getTelegramWebApp } from "@/lib/telegram";
+import { getTelegramWebApp, isTelegramWebApp } from "@/lib/telegram";
 
 export function useTelegramBack(enabled = true) {
   const router = useRouter();
 
   useEffect(() => {
+    if (!isTelegramWebApp()) return;
     const back = getTelegramWebApp()?.BackButton;
     if (!back || !enabled) return;
 

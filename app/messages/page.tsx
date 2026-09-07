@@ -68,7 +68,9 @@ export default function MessagesPage() {
                         {formatShortDate(message.createdAt, dateLocale)} {formatTime(message.createdAt)}
                       </p>
                       {message.error ? (
-                        <p className="mt-1 text-xs text-[#E5484D]">{message.error}</p>
+                        <p className={`mt-1 text-xs ${message.status === "failed" ? "text-[#E5484D]" : "text-[var(--tg-hint-color)]"}`}>
+                          {message.error}
+                        </p>
                       ) : null}
                     </div>
                     <span className="rounded-full bg-[var(--tg-bg-color)] px-2.5 py-1 text-[11px] font-semibold">

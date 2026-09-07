@@ -15,6 +15,7 @@ export interface NotificationResult {
   status: MessageStatus;
   provider: string;
   error?: string;
+  warning?: string;
 }
 
 export interface NotificationProvider {

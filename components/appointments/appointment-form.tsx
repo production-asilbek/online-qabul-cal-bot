@@ -210,6 +210,7 @@ function SuccessState({
         return;
       }
       setSent(true);
+      if (message?.error) setError(message.error);
       haptic("success");
     } finally {
       setSending(false);

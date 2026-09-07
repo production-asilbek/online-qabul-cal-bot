@@ -31,7 +31,6 @@ export async function sendMessage(chatId: number, text: string, extra?: Record<s
   return telegramCall("sendMessage", {
     chat_id: chatId,
     text,
-    parse_mode: "HTML",
     ...extra,
   });
 }

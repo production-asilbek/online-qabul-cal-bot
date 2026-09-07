@@ -131,6 +131,48 @@ export async function eskizUser() {
   return (body.data as Record<string, unknown> | undefined) ?? {};
 }
 
+const ESKIZ_TEST_TEXT = "Bu Eskiz dan test";
+
+function isEskizTestOnlyError(message: string) {
+  return /для теста|test from eskiz|eskiz dan test|тест от eskiz/i.test(message);
+}
+
+function isEskizApprovedTestText(message: string) {
+  const normalized = message.trim();
+  return (
+    normalized === "Bu Eskiz dan test" ||
+    normalized === "Это тест от Eskiz" ||
+    normalized === "This is test from Eskiz"
+  );
+}
+
+async function postEskizSms(mobile: string, message: string) {
+  const form = new FormData();
+  form.set("mobile_phone", mobile);
+  form.set("message", message);
+  form.set("from", eskizFrom());
+
+  let response = await authorizedFetch("/api/message/sms/send", {
+    method: "POST",
+    body: form,
+  });
+  let body = await parseJson(response);
+  if (!response.ok && (response.status === 400 || response.status === 415 || response.status === 422)) {
+    response = await authorizedFetch("/api/message/sms/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mobile_phone: mobile,
+        message,
+        from: eskizFrom(),
+      }),
+    });
+    body = await parseJson(response);
+  }
+  const id = body.id ?? (body.data as { id?: string | number } | undefined)?.id;
+  return { response, body, id };
+}
+
 export async function sendEskizSms(phone: string, message: string): Promise<NotificationResult> {
   const mobile = eskizPhone(phone);
   if (mobile.length !== 12 || !mobile.startsWith("998")) {
@@ -144,43 +186,45 @@ export async function sendEskizSms(phone: string, message: string): Promise<Noti
   }
 
   try {
-    const form = new FormData();
-    form.set("mobile_phone", mobile);
-    form.set("message", message);
-    form.set("from", eskizFrom());
+    let { response, body, id } = await postEskizSms(mobile, message);
+    let warning: string | undefined;
 
-    let response = await authorizedFetch("/api/message/sms/send", {
-      method: "POST",
-      body: form,
-    });
-    let body = await parseJson(response);
-    if (!response.ok && (response.status === 400 || response.status === 415 || response.status === 422)) {
-      response = await authorizedFetch("/api/message/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mobile_phone: mobile,
-          message,
-          from: eskizFrom(),
-        }),
-      });
-      body = await parseJson(response);
-    }
-    const id = body.id ?? (body.data as { id?: string | number } | undefined)?.id;
     if (!response.ok) {
-      return {
-        success: false,
-        messageId: String(id ?? crypto.randomUUID()),
-        status: "failed",
-        provider: "eskiz",
-        error: String(body.message ?? `Eskiz send failed (${response.status})`),
-      };
+      const error = String(body.message ?? `Eskiz send failed (${response.status})`);
+      if (isEskizTestOnlyError(error) && !isEskizApprovedTestText(message)) {
+        const retry = await postEskizSms(mobile, ESKIZ_TEST_TEXT);
+        response = retry.response;
+        body = retry.body;
+        id = retry.id;
+        if (response.ok) {
+          warning =
+            "Eskiz test rejimida. Telefonga faqat «Bu Eskiz dan test» yuborildi. Haqiqiy tasdiq matni uchun Eskiz kabinetida shablonni tasdiqlating.";
+        } else {
+          return {
+            success: false,
+            messageId: String(retry.id ?? crypto.randomUUID()),
+            status: "failed",
+            provider: "eskiz",
+            error: String(retry.body.message ?? error),
+          };
+        }
+      } else {
+        return {
+          success: false,
+          messageId: String(id ?? crypto.randomUUID()),
+          status: "failed",
+          provider: "eskiz",
+          error,
+        };
+      }
     }
+
     return {
       success: true,
       messageId: String(id ?? crypto.randomUUID()),
       status: "queued",
       provider: "eskiz",
+      warning,
     };
   } catch (error) {
     return {

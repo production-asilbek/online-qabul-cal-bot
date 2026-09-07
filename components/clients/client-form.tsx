@@ -10,10 +10,12 @@ import { clientSchema, type ClientInput } from "@/lib/validation/schemas";
 import { createClient, getClient, getTags, updateClient } from "@/lib/services/clients";
 import { track } from "@/lib/services/analytics";
 import { haptic } from "@/lib/telegram";
+import { useTelegram } from "@/lib/hooks/use-telegram";
 import { useI18n } from "@/lib/i18n/provider";
 
 export function ClientForm({ clientId }: { clientId?: string }) {
   const { t } = useI18n();
+  const { user: telegramUser } = useTelegram();
   const router = useRouter();
   const existing = clientId ? getClient(clientId) : null;
   const tags = getTags();
@@ -72,8 +74,17 @@ export function ClientForm({ clientId }: { clientId?: string }) {
       <Field label={t.telegramUsername}>
         <Input placeholder="@username" {...form.register("telegramUsername")} />
       </Field>
-      <Field label={t.telegramId}>
+      <Field label={t.telegramId} hint={t.telegramIdHint}>
         <Input inputMode="numeric" {...form.register("telegramId")} />
+        {telegramUser?.id ? (
+          <button
+            type="button"
+            className="mt-2 text-left text-sm font-semibold text-[var(--tg-accent-text-color)]"
+            onClick={() => form.setValue("telegramId", String(telegramUser.id))}
+          >
+            {t.useMyTelegramId}: {telegramUser.id}
+          </button>
+        ) : null}
       </Field>
       <Field label={t.dateOfBirth}>
         <Input type="date" {...form.register("dateOfBirth")} />

@@ -21,6 +21,7 @@ export default function MorePage() {
     { href: "/services", label: t.services },
     { href: "/staff", label: t.staffTitle },
     { href: "/messages", label: t.messages },
+    { href: "/pay", label: t.pay },
     { href: "/settings", label: t.settings },
     { href: "/clients/import", label: t.importClients },
   ];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScreenHeader } from "@/components/layout/screen-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -36,9 +36,11 @@ export default function AppointmentDetailPage() {
   const appointmentId = params.id;
   const display = getAppointment(appointmentId);
   const [reminderError, setReminderError] = useState<string | null>(null);
+  const viewed = useRef(false);
 
   useEffect(() => {
-    if (!appointmentId) return;
+    if (!appointmentId || viewed.current) return;
+    viewed.current = true;
     track("appointment_viewed", appointmentId);
   }, [appointmentId]);
 
@@ -119,6 +121,7 @@ export default function AppointmentDetailPage() {
                 haptic("error");
                 return;
               }
+              if (message?.error) setReminderError(message.error);
               haptic("success");
             } catch {
               setReminderError(t.messageFailed);

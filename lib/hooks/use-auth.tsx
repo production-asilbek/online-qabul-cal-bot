@@ -18,10 +18,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   const refresh = useCallback(async () => {
-    const response = await fetch("/api/auth/me", { cache: "no-store" });
-    const json = (await response.json()) as { user: SessionUser | null };
-    setUser(json.user);
-    setReady(true);
+    try {
+      const response = await fetch("/api/auth/me", { cache: "no-store" });
+      const json = (await response.json()) as { user: SessionUser | null };
+      setUser(json.user);
+    } catch {
+      setUser(null);
+    } finally {
+      setReady(true);
+    }
   }, []);
 
   useEffect(() => {

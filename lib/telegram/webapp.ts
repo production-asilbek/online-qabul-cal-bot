@@ -38,6 +38,7 @@ export function initTelegram() {
 }
 
 export function haptic(style: "light" | "medium" | "heavy" | "success" | "error" | "warning" = "light") {
+  if (!isTelegramWebApp()) return;
   const feedback = getTelegramWebApp()?.HapticFeedback;
   if (!feedback) return;
   if (style === "success" || style === "error" || style === "warning") {

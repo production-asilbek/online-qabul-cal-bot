@@ -1,5 +1,6 @@
 import type { NotificationPayload, NotificationProvider, NotificationResult } from "./types";
 import { eskizConfigured, sendEskizPayload } from "./eskiz";
+import { sendTelegramPayload } from "./telegram";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -54,23 +55,7 @@ export class TelegramNotificationProvider implements NotificationProvider {
   readonly channel = "telegram" as const;
 
   async send(payload: NotificationPayload): Promise<NotificationResult> {
-    await delay(200);
-    if (!payload.to) {
-      return {
-        success: false,
-        messageId: crypto.randomUUID(),
-        status: "failed",
-        provider: this.name,
-        error: "Client has no Telegram ID",
-      };
-    }
-
-    return {
-      success: true,
-      messageId: `tg_${crypto.randomUUID()}`,
-      status: "queued",
-      provider: this.name,
-    };
+    return sendTelegramPayload(payload);
   }
 }
 

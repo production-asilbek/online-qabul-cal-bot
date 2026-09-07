@@ -38,21 +38,32 @@ async function deliver(channel: MessageChannel, to: string, content: string): Pr
     return json;
   }
 
-  if (!to) {
-    return {
-      success: false,
-      messageId: crypto.randomUUID(),
-      status: "failed",
-      provider: "telegram",
-      error: "Client has no Telegram ID",
-    };
+  if (channel === "telegram") {
+    const response = await fetch("/api/telegram/send", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, message: content }),
+    });
+    const json = (await response.json()) as NotificationResult & { error?: string };
+    if (!response.ok && !json.status) {
+      return {
+        success: false,
+        messageId: crypto.randomUUID(),
+        status: "failed",
+        provider: "telegram",
+        error: json.error ?? "Telegram send failed",
+      };
+    }
+    return json;
   }
 
   return {
-    success: true,
-    messageId: `tg_${crypto.randomUUID()}`,
-    status: "queued",
-    provider: "telegram",
+    success: false,
+    messageId: crypto.randomUUID(),
+    status: "failed",
+    provider: channel,
+    error: "This channel is not connected yet.",
   };
 }
 
@@ -82,9 +93,9 @@ export function buildTemplateVariables(clientId: string, extras: TemplateVariabl
 }
 
 export function channelForClient(client: { phone?: string; telegramId?: number; telegramUsername?: string }): MessageChannel {
+  if (client.telegramId && client.telegramId > 0) return "telegram";
   if (client.phone?.trim()) return "sms";
-  if (client.telegramId || client.telegramUsername) return "telegram";
-  return "sms";
+  return "telegram";
 }
 
 export async function sendMessage(input: {
@@ -144,7 +155,7 @@ export async function sendMessage(input: {
     stored.status = nextStatus;
     stored.provider = result.provider;
     stored.providerMessageId = result.messageId;
-    stored.error = result.error;
+    stored.error = result.success ? result.warning : result.error;
     stored.sentAt = result.success ? nowIso() : undefined;
     draft.messageLogs.push({
       id: crypto.randomUUID(),

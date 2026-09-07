@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "date-fns";
 import { ScreenHeader } from "@/components/layout/screen-header";
 import { Card } from "@/components/ui/card";
 import { useAppStore } from "@/lib/hooks/use-store";
@@ -8,11 +9,15 @@ import { getCurrentBusiness } from "@/lib/services/businesses";
 import { formatPrice } from "@/lib/utils/format";
 import { useI18n } from "@/lib/i18n/provider";
 
+const PAYMENT_RECEIVED = 0;
+
 export default function DashboardPage() {
   useAppStore();
-  const { t } = useI18n();
+  const { t, dateLocale } = useI18n();
   const stats = getMonthStats();
   const business = getCurrentBusiness();
+  const month = format(new Date(), "LLLL", { locale: dateLocale });
+  const paid = PAYMENT_RECEIVED > 0;
 
   return (
     <main className="pb-8">
@@ -32,6 +37,17 @@ export default function DashboardPage() {
             <Mini label={t.noShow} value={stats.noShow} />
             <Mini label={t.revenue} value={formatPrice(stats.revenue, business.currency)} />
           </div>
+        </Card>
+        <Card className="mt-3">
+          <p className="text-sm text-[var(--tg-subtitle-text-color)]">
+            {t.paymentStatus} <span className="capitalize">{month}</span>
+          </p>
+          <div className={`mt-1 text-2xl font-semibold ${paid ? "text-[#34C759]" : "text-[#E5484D]"}`}>
+            {paid ? t.payStatusPaid : t.payStatusUnpaid}
+          </div>
+          {paid ? null : (
+            <p className="mt-1 text-xs text-[var(--tg-hint-color)]">{t.balanceHint}</p>
+          )}
         </Card>
       </div>
     </main>
