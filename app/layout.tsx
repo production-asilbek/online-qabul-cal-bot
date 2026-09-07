@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import { AppShell } from "@/components/layout/app-shell";
 import { StoreProvider } from "@/lib/hooks/use-store";
+import { AuthProvider } from "@/lib/hooks/use-auth";
 import { LanguageProvider } from "@/lib/i18n/provider";
 import "./globals.css";
 
@@ -40,9 +41,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full">
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
         <StoreProvider>
-          <LanguageProvider>
-            <AppShell>{children}</AppShell>
-          </LanguageProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              <AppShell>{children}</AppShell>
+            </LanguageProvider>
+          </AuthProvider>
         </StoreProvider>
       </body>
     </html>

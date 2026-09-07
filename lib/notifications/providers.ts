@@ -1,4 +1,5 @@
 import type { NotificationPayload, NotificationProvider, NotificationResult } from "./types";
+import { eskizConfigured, sendEskizPayload } from "./eskiz";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -74,11 +75,17 @@ export class TelegramNotificationProvider implements NotificationProvider {
 }
 
 export class SmsNotificationProvider implements NotificationProvider {
-  readonly name = process.env.SMS_PROVIDER || "mock-sms";
   readonly channel = "sms" as const;
   private readonly inner = new MockSmsProvider();
 
+  get name() {
+    return eskizConfigured() && process.env.SMS_PROVIDER !== "mock" ? "eskiz" : "mock-sms";
+  }
+
   async send(payload: NotificationPayload): Promise<NotificationResult> {
+    if (this.name === "eskiz") {
+      return sendEskizPayload(payload);
+    }
     return this.inner.send(payload);
   }
 }

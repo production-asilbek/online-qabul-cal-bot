@@ -10,38 +10,40 @@ import { useAppStore } from "@/lib/hooks/use-store";
 import { createStaff, getStaff } from "@/lib/services/staff";
 import { fullName } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
+import { useI18n } from "@/lib/i18n/provider";
 
 const COLORS = ["#187ACC", "#2A9D8F", "#C9A227", "#E76F51", "#7C6CF0"];
 
 export default function StaffPage() {
   useAppStore();
+  const { t } = useI18n();
   const staff = getStaff(true);
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [title, setTitle] = useState("Specialist");
+  const [title, setTitle] = useState("");
   const [color, setColor] = useState(COLORS[0]);
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Staff" backHref="/more" />
+      <ScreenHeader title={t.staffTitle} backHref="/more" />
       <div className="flex flex-col gap-3 px-4">
         {staff.map((member) => (
           <Card key={member.id} className="flex items-center gap-3">
             <span className="h-10 w-10 rounded-full" style={{ background: member.color }} />
             <div>
               <div className="font-semibold">
-                {member.title.toLowerCase().includes("dentist") ? `Dr. ${member.firstName}` : fullName(member)}
+                {member.title.toLowerCase().includes("dentist") ? `${t.dentistPrefix} ${member.firstName}` : fullName(member)}
               </div>
               <div className="text-sm text-[var(--tg-subtitle-text-color)]">{member.title}</div>
             </div>
           </Card>
         ))}
-        <Button className="mt-2" onClick={() => setOpen(true)}>
-          Add staff
+        <Button className="mt-2" onClick={() => { setTitle(t.specialist); setOpen(true); }}>
+          {t.addStaff}
         </Button>
       </div>
-      <Sheet open={open} onClose={() => setOpen(false)} title="New staff">
+      <Sheet open={open} onClose={() => setOpen(false)} title={t.newStaff}>
         <form
           className="flex flex-col gap-3"
           onSubmit={(event) => {
@@ -54,14 +56,14 @@ export default function StaffPage() {
           }}
         >
           <div className="grid grid-cols-2 gap-3">
-            <Field label="First name">
+            <Field label={t.firstName}>
               <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
             </Field>
-            <Field label="Last name">
+            <Field label={t.lastName}>
               <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
             </Field>
           </div>
-          <Field label="Title">
+          <Field label={t.titleField}>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} />
           </Field>
           <div className="flex gap-2">
@@ -76,7 +78,7 @@ export default function StaffPage() {
               />
             ))}
           </div>
-          <Button type="submit">Save</Button>
+          <Button type="submit">{t.save}</Button>
         </form>
       </Sheet>
     </main>

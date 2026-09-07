@@ -1,22 +1,23 @@
 "use client";
 
 import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
-import { ru as ruDate, uz as uzDate } from "date-fns/locale";
+import { enUS, ru as ruDate, uz as uzDate } from "date-fns/locale";
 import type { Locale as DateLocale } from "date-fns";
 import { dictionaries, type Locale, type Messages } from "./messages";
-import { getTelegramUser } from "@/lib/telegram";
 
 const STORAGE_KEY = "stom-lang";
 
 let currentLocale: Locale = "uz";
 const listeners = new Set<() => void>();
 
+function isLocale(value: string | null): value is Locale {
+  return value === "uz" || value === "ru" || value === "en";
+}
+
 function detectLocale(): Locale {
   if (typeof window === "undefined") return "uz";
   const saved = window.localStorage.getItem(STORAGE_KEY);
-  if (saved === "uz" || saved === "ru") return saved;
-  const code = getTelegramUser().language_code ?? navigator.language;
-  if (code.toLowerCase().startsWith("ru")) return "ru";
+  if (isLocale(saved)) return saved;
   return "uz";
 }
 
@@ -49,6 +50,12 @@ export function setLocale(locale: Locale) {
   emit();
 }
 
+function dateLocaleFor(locale: Locale): DateLocale {
+  if (locale === "ru") return ruDate;
+  if (locale === "en") return enUS;
+  return uzDate;
+}
+
 const I18nContext = createContext({
   locale: "uz" as Locale,
   t: dictionaries.uz,
@@ -63,7 +70,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       locale,
       t: dictionaries[locale],
       setLocale,
-      dateLocale: locale === "ru" ? ruDate : uzDate,
+      dateLocale: dateLocaleFor(locale),
     }),
     [locale],
   );
@@ -91,6 +98,17 @@ export function statusLabel(t: Messages, status: string) {
   return t[map[status] ?? "statusScheduled"];
 }
 
+export function messageStatusLabel(t: Messages, status: string) {
+  const map: Record<string, keyof Messages> = {
+    draft: "statusDraft",
+    queued: "statusQueued",
+    sent: "statusSentMsg",
+    delivered: "statusDelivered",
+    failed: "statusFailed",
+  };
+  return t[map[status] ?? "statusQueued"];
+}
+
 export function businessTypeLabel(t: Messages, type: string) {
   const map: Record<string, keyof Messages> = {
     clinic: "typeClinic",
@@ -103,4 +121,20 @@ export function businessTypeLabel(t: Messages, type: string) {
     other: "typeOther",
   };
   return t[map[type] ?? "typeOther"];
+}
+
+export function categoryLabel(t: Messages, category: string) {
+  const map: Record<string, keyof Messages> = {
+    "medical service": "categoryMedical",
+  };
+  return t[map[category] ?? "categoryMedical"];
+}
+
+export function weekdayLetters(t: Messages) {
+  return t.weekdayShort.split(",");
+}
+
+export function weekdayName(t: Messages, weekday: number) {
+  const keys = ["weekday0", "weekday1", "weekday2", "weekday3", "weekday4", "weekday5", "weekday6"] as const;
+  return t[keys[weekday] ?? "weekday1"];
 }

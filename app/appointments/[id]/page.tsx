@@ -12,8 +12,9 @@ import { getAppointment, updateAppointmentStatus } from "@/lib/services/appointm
 import { track } from "@/lib/services/analytics";
 import { sendMessage, formatAppointmentVariables } from "@/lib/services/messages";
 import { formatLongDate, formatTime } from "@/lib/utils/date";
-import { fullName, STATUS_LABELS } from "@/lib/utils/format";
+import { fullName } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
+import { statusLabel, useI18n } from "@/lib/i18n/provider";
 import type { AppointmentStatus } from "@/types";
 import Link from "next/link";
 
@@ -28,6 +29,7 @@ const NEXT_STATUSES: AppointmentStatus[] = [
 
 export default function AppointmentDetailPage() {
   useAppStore();
+  const { t, dateLocale } = useI18n();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const display = getAppointment(params.id);
@@ -39,8 +41,8 @@ export default function AppointmentDetailPage() {
   if (!display) {
     return (
       <main>
-        <ScreenHeader title="Appointment" backHref="/calendar" />
-        <EmptyState title="Appointment not found" subtitle="It may have been removed." />
+        <ScreenHeader title={t.appointment} backHref="/calendar" />
+        <EmptyState title={t.appointmentNotFound} subtitle={t.appointmentRemoved} />
       </main>
     );
   }
@@ -54,16 +56,16 @@ export default function AppointmentDetailPage() {
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Appointment" backHref="/" />
+      <ScreenHeader title={t.appointment} backHref="/" />
       <div className="flex flex-col gap-4 px-4">
         <Card>
           <Link href={`/clients/${display.client.id}`} className="text-2xl font-semibold">
             {fullName(display.client)}
           </Link>
-          <p className="mt-2">{formatLongDate(display.appointment.startAt)} · {formatTime(display.appointment.startAt)}</p>
+          <p className="mt-2">{formatLongDate(display.appointment.startAt, dateLocale)} · {formatTime(display.appointment.startAt)}</p>
           <p className="mt-1">{display.service.name}</p>
           <p className="mt-1 text-sm text-[var(--tg-subtitle-text-color)]">
-            {display.staff.title.startsWith("Dentist") ? `Dr. ${display.staff.firstName}` : fullName(display.staff)}
+            {display.staff.title.toLowerCase().includes("dentist") ? `${t.dentistPrefix} ${display.staff.firstName}` : fullName(display.staff)}
           </p>
           <div className="mt-3">
             <StatusBadge status={display.appointment.status} />
@@ -74,7 +76,7 @@ export default function AppointmentDetailPage() {
         </Card>
 
         <div>
-          <p className="mb-2 text-sm font-semibold">Status</p>
+          <p className="mb-2 text-sm font-semibold">{t.status}</p>
           <div className="flex flex-wrap gap-2">
             {NEXT_STATUSES.map((status) => (
               <button
@@ -86,7 +88,7 @@ export default function AppointmentDetailPage() {
                     : "bg-[var(--tg-section-bg-color)]"
                 }`}
               >
-                {STATUS_LABELS[status]}
+                {statusLabel(t, status)}
               </button>
             ))}
           </div>
@@ -113,13 +115,13 @@ export default function AppointmentDetailPage() {
             }
           }}
         >
-          Send reminder
+          {t.sendReminderAction}
         </Button>
         <Button variant="secondary" onClick={() => router.push(`/appointments/new?clientId=${display.client.id}`)}>
-          Rebook
+          {t.rebook}
         </Button>
         <Button variant="ghost" onClick={() => router.push(`/appointments/${display.appointment.id}/edit`)}>
-          Edit
+          {t.edit}
         </Button>
       </div>
     </main>

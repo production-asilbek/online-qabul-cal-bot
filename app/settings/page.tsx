@@ -16,6 +16,7 @@ import {
 import { REMINDER_OPTIONS } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
 import { useI18n } from "@/lib/i18n/provider";
+import { LanguageSwitcher } from "@/components/layout/language-switcher";
 
 export default function SettingsPage() {
   useAppStore();
@@ -27,9 +28,9 @@ export default function SettingsPage() {
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Settings" backHref="/more" />
+      <ScreenHeader title={t.settings} backHref="/more" />
       <div className="flex flex-col gap-4 px-4">
-        <Field label="Business name">
+        <Field label={t.businessName}>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         <Button
@@ -38,13 +39,13 @@ export default function SettingsPage() {
             haptic("success");
           }}
         >
-          Save name
+          {t.saveName}
         </Button>
         <Link href="/settings/hours" className="font-medium text-[var(--tg-accent-text-color)]">
-          Working hours
+          {t.workingHours}
         </Link>
         <Card>
-          <p className="mb-3 font-semibold">Reminder before appointment</p>
+          <p className="mb-3 font-semibold">{t.reminderBefore}</p>
           <div className="flex flex-col gap-3">
             {REMINDER_OPTIONS.map((option) => {
               const checked = offsets.includes(option.minutes);
@@ -69,6 +70,7 @@ export default function SettingsPage() {
           </div>
         </Card>
       </div>
+      <LanguageSwitcher />
     </main>
   );
 }

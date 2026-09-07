@@ -1,31 +1,41 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/hooks/use-store";
+import { useAuth } from "@/lib/hooks/use-auth";
 import { useTelegram } from "@/lib/hooks/use-telegram";
-import { getCurrentBusiness } from "@/lib/services/businesses";
+import { isRegistrationComplete } from "@/lib/auth/registration";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
 
-const HIDDEN_NAV = ["/onboarding", "/dev"];
+const HIDDEN_NAV = ["/onboarding", "/register", "/dev"];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { ready } = useAppStore();
+  const { user, ready: authReady } = useAuth();
   useTelegram();
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    if (!ready) return;
-    const business = getCurrentBusiness();
-    if (!business.onboardingComplete && pathname !== "/onboarding") {
-      router.replace("/onboarding");
+    if (!ready || !authReady) return;
+    const onRegister = pathname.startsWith("/register");
+    const registered = isRegistrationComplete();
+    if (!user && !onRegister) {
+      router.replace("/register");
+      return;
     }
-  }, [ready, pathname, router]);
+    if (user && !registered && !onRegister) {
+      router.replace("/register");
+      return;
+    }
+    if (user && registered && onRegister) {
+      router.replace("/");
+    }
+  }, [ready, authReady, user, pathname, router]);
 
-  if (!ready) {
+  if (!ready || !authReady) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col gap-4 px-5 pt-16">
         <Skeleton className="h-8 w-48" />

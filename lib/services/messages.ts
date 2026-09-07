@@ -70,7 +70,7 @@ export async function sendMessage(input: {
     templateId: input.templateId,
     content,
     status: "queued",
-    provider: input.channel === "telegram" ? "telegram" : "mock-sms",
+    provider: input.channel === "telegram" ? "telegram" : "sms",
     createdAt: nowIso(),
   };
 

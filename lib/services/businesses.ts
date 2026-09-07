@@ -87,9 +87,36 @@ export function completeOnboarding(input: { name: string; type: BusinessType; ho
   });
 }
 
+export function getBusinessCategory(business = getCurrentBusiness()) {
+  return business.category || "medical service";
+}
+
 export function resetOnboarding() {
   mockStore.mutate((draft) => {
     const business = draft.businesses.find((item) => item.id === draft.currentBusinessId);
     if (business) business.onboardingComplete = false;
+  });
+}
+
+export function finishRegistration(name: string) {
+  mockStore.mutate((draft) => {
+    const business = draft.businesses.find((item) => item.id === draft.currentBusinessId);
+    if (!business) return;
+    business.name = name.trim();
+    business.category = "medical service";
+    business.onboardingComplete = true;
+    business.updatedAt = nowIso();
+  });
+  return getCurrentBusiness();
+}
+
+export function applyGoogleProfile(name: string) {
+  mockStore.mutate((draft) => {
+    const user = draft.users.find((item) => item.id === draft.currentUserId);
+    if (!user) return;
+    const [first, ...rest] = name.trim().split(/\s+/);
+    user.firstName = first || user.firstName;
+    if (rest.length) user.lastName = rest.join(" ");
+    user.updatedAt = nowIso();
   });
 }

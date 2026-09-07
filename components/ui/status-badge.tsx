@@ -1,5 +1,7 @@
+"use client";
+
 import type { AppointmentStatus } from "@/types";
-import { STATUS_LABELS } from "@/lib/utils/format";
+import { statusLabel, useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils/cn";
 
 const TONES: Record<AppointmentStatus, string> = {
@@ -12,9 +14,10 @@ const TONES: Record<AppointmentStatus, string> = {
 };
 
 export function StatusBadge({ status }: { status: AppointmentStatus }) {
+  const { t } = useI18n();
   return (
     <span className={cn("inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold", TONES[status])}>
-      {STATUS_LABELS[status]}
+      {statusLabel(t, status)}
     </span>
   );
 }

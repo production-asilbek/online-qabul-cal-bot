@@ -12,9 +12,11 @@ import { archiveService, createService, getServices } from "@/lib/services/servi
 import { formatDuration, formatPrice } from "@/lib/utils/format";
 import { getCurrentBusiness } from "@/lib/services/businesses";
 import { haptic } from "@/lib/telegram";
+import { useI18n } from "@/lib/i18n/provider";
 
 export default function ServicesPage() {
   useAppStore();
+  const { t } = useI18n();
   const business = getCurrentBusiness();
   const services = getServices(true);
   const [open, setOpen] = useState(false);
@@ -25,13 +27,13 @@ export default function ServicesPage() {
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Services" backHref="/more" />
+      <ScreenHeader title={t.services} backHref="/more" />
       <div className="px-4">
         {services.length === 0 ? (
           <EmptyState
-            title="Create services so you can book appointments faster."
-            subtitle="Name, price, and duration are enough."
-            actionLabel="Add service"
+            title={t.emptyServicesTitle}
+            subtitle={t.emptyServicesSubtitle}
+            actionLabel={t.addService}
             onAction={() => setOpen(true)}
           />
         ) : (
@@ -41,9 +43,9 @@ export default function ServicesPage() {
                 <div>
                   <div className="font-semibold">{service.name}</div>
                   <div className="mt-1 text-sm text-[var(--tg-subtitle-text-color)]">
-                    {formatPrice(service.price, business.currency)} · {formatDuration(service.durationMin)}
+                    {formatPrice(service.price, business.currency)} · {formatDuration(service.durationMin, t)}
                   </div>
-                  {!service.active ? <div className="mt-1 text-xs text-[var(--tg-hint-color)]">Archived</div> : null}
+                  {!service.active ? <div className="mt-1 text-xs text-[var(--tg-hint-color)]">{t.archived}</div> : null}
                 </div>
                 {service.active ? (
                   <button
@@ -53,7 +55,7 @@ export default function ServicesPage() {
                       haptic("warning");
                     }}
                   >
-                    Archive
+                    {t.archive}
                   </button>
                 ) : null}
               </Card>
@@ -61,10 +63,10 @@ export default function ServicesPage() {
           </div>
         )}
         <Button className="mt-5 w-full" onClick={() => setOpen(true)}>
-          Add service
+          {t.addService}
         </Button>
       </div>
-      <Sheet open={open} onClose={() => setOpen(false)} title="New service">
+      <Sheet open={open} onClose={() => setOpen(false)} title={t.newService}>
         <form
           className="flex flex-col gap-3"
           onSubmit={(event) => {
@@ -82,21 +84,21 @@ export default function ServicesPage() {
             setDescription("");
           }}
         >
-          <Field label="Name">
+          <Field label={t.name}>
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </Field>
-          <Field label="Description">
+          <Field label={t.description}>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Price">
+            <Field label={t.price}>
               <Input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
             </Field>
-            <Field label="Duration (min)">
+            <Field label={t.durationMin}>
               <Input type="number" min={5} value={durationMin} onChange={(e) => setDurationMin(e.target.value)} />
             </Field>
           </div>
-          <Button type="submit">Save</Button>
+          <Button type="submit">{t.save}</Button>
         </form>
       </Sheet>
     </main>

@@ -10,6 +10,7 @@ import { formatDayHeading, formatTime, toDateInput } from "@/lib/utils/date";
 import { buildTimeSlots, hoursForDate } from "@/lib/utils/schedule";
 import { fullName } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
+import { useI18n, weekdayLetters } from "@/lib/i18n/provider";
 import type { AppointmentDisplay, WorkingHours } from "@/types";
 import { parseISO } from "date-fns";
 
@@ -25,6 +26,7 @@ export function DayView({
   onSwipe?: (direction: -1 | 1) => void;
 }) {
   const router = useRouter();
+  const { t, dateLocale } = useI18n();
   const startX = useRef<number | null>(null);
   const dayHours = hoursForDate(hours, date);
   const slots = buildTimeSlots(dayHours);
@@ -42,20 +44,20 @@ export function DayView({
 
   if (dayHours?.isClosed) {
     return (
-      <EmptyState title="Closed" subtitle="This day is marked as a day off." />
+      <EmptyState title={t.closed} subtitle={t.closedSubtitle} />
     );
   }
 
   return (
     <div className="px-4 pb-8" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div className="mb-4 text-sm font-semibold tracking-wide text-[var(--tg-subtitle-text-color)]">
-        {formatDayHeading(date)}
+        {formatDayHeading(date, dateLocale)}
       </div>
       {slots.length === 0 ? (
         <EmptyState
-          title="Your day is clear."
-          subtitle="No working hours set for this day."
-          actionLabel="+ Book appointment"
+          title={t.todayClearTitle}
+          subtitle={t.noHours}
+          actionLabel={`+ ${t.bookAppointment}`}
           onAction={() => router.push(`/appointments/new?date=${toDateInput(date)}`)}
         />
       ) : (
@@ -81,7 +83,7 @@ export function DayView({
                         router.push(`/appointments/new?date=${toDateInput(date)}&time=${slot}`);
                       }}
                       className="h-10 w-full rounded-xl border border-dashed border-[color-mix(in_srgb,var(--tg-hint-color)_35%,transparent)] text-left text-xs text-[var(--tg-hint-color)]"
-                      aria-label={`Create appointment at ${slot}`}
+                      aria-label={`${t.createAt} ${slot}`}
                     />
                   )}
                 </div>
@@ -97,7 +99,7 @@ export function DayView({
             className="w-full"
             onClick={() => router.push(`/appointments/new?date=${toDateInput(date)}`)}
           >
-            + Book appointment
+            + {t.bookAppointment}
           </Button>
         </div>
       ) : null}
@@ -128,6 +130,7 @@ export function MultiDayView({
   days: number;
   appointments: AppointmentDisplay[];
 }) {
+  const { dateLocale } = useI18n();
   const dates = Array.from({ length: days }, (_, index) => addDays(start, index));
   return (
     <div className={`grid gap-2 px-3 pb-8 ${days > 3 ? "grid-cols-7" : "grid-cols-3"}`}>
@@ -136,7 +139,7 @@ export function MultiDayView({
         return (
           <div key={date.toISOString()} className="min-h-[320px] rounded-[18px] bg-[var(--tg-section-bg-color)] p-2">
             <div className="mb-2 text-center text-[11px] font-semibold text-[var(--tg-subtitle-text-color)]">
-              {formatDayHeading(date)}
+              {formatDayHeading(date, dateLocale)}
             </div>
             <div className="flex flex-col gap-2">
               {items.map((item) => (
@@ -161,6 +164,7 @@ export function MonthView({
   appointments: AppointmentDisplay[];
   onSelect: (date: Date) => void;
 }) {
+  const { t } = useI18n();
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
   const startOffset = (first.getDay() + 6) % 7;
   const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
@@ -172,7 +176,7 @@ export function MonthView({
   return (
     <div className="px-4 pb-8">
       <div className="mb-2 grid grid-cols-7 text-center text-[11px] font-semibold text-[var(--tg-hint-color)]">
-        {["M", "T", "W", "T", "F", "S", "S"].map((label, index) => (
+        {weekdayLetters(t).map((label, index) => (
           <div key={`${label}-${index}`}>{label}</div>
         ))}
       </div>

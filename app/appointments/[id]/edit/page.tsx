@@ -5,11 +5,13 @@ import { Suspense } from "react";
 import { ScreenHeader } from "@/components/layout/screen-header";
 import { AppointmentForm } from "@/components/appointments/appointment-form";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/lib/i18n/provider";
 
 function EditInner({ id }: { id: string }) {
+  const { t } = useI18n();
   return (
     <main>
-      <ScreenHeader title="Edit appointment" backHref={`/appointments/${id}`} />
+      <ScreenHeader title={t.editAppointment} backHref={`/appointments/${id}`} />
       <AppointmentForm appointmentId={id} />
     </main>
   );

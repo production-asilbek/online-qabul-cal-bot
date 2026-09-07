@@ -14,11 +14,13 @@ import { track } from "@/lib/services/analytics";
 import { formatLongDate, formatTime } from "@/lib/utils/date";
 import { fullName } from "@/lib/utils/format";
 import { telHref } from "@/lib/utils/phone";
+import { useI18n } from "@/lib/i18n/provider";
 import { useEffect } from "react";
 import Link from "next/link";
 
 export default function ClientProfilePage() {
   useAppStore();
+  const { t, dateLocale } = useI18n();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const client = getClient(params.id);
@@ -33,15 +35,15 @@ export default function ClientProfilePage() {
   if (!client) {
     return (
       <main>
-        <ScreenHeader title="Client" backHref="/clients" />
-        <EmptyState title="Client not found" subtitle="This client may have been removed." />
+        <ScreenHeader title={t.client} backHref="/clients" />
+        <EmptyState title={t.clientNotFound} subtitle={t.clientRemoved} />
       </main>
     );
   }
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Client" backHref="/clients" />
+      <ScreenHeader title={t.client} backHref="/clients" />
       <div className="px-4">
         <Card>
           <h2 className="text-2xl font-semibold">{fullName(client)}</h2>
@@ -66,30 +68,30 @@ export default function ClientProfilePage() {
         </Card>
 
         <div className="mt-6">
-          <SectionHeader title="Next appointment" />
+          <SectionHeader title={t.nextAppointment} />
           {next ? (
             <Link href={`/appointments/${next.appointment.id}`}>
               <Card>
-                <div className="font-semibold">{formatLongDate(next.appointment.startAt)}</div>
+                <div className="font-semibold">{formatLongDate(next.appointment.startAt, dateLocale)}</div>
                 <div className="text-[var(--tg-accent-text-color)]">{formatTime(next.appointment.startAt)}</div>
                 <div className="mt-1 text-sm">{next.service.name}</div>
               </Card>
             </Link>
           ) : (
-            <p className="text-sm text-[var(--tg-hint-color)]">No upcoming visit.</p>
+            <p className="text-sm text-[var(--tg-hint-color)]">{t.noUpcoming}</p>
           )}
         </div>
 
         <div className="mt-6">
-          <SectionHeader title="Visit history" />
+          <SectionHeader title={t.visitHistory} />
           {history.length === 0 ? (
-            <EmptyState title="History is empty" subtitle="Appointments will appear here." />
+            <EmptyState title={t.historyEmpty} subtitle={t.historyEmptySubtitle} />
           ) : (
             <div className="flex flex-col gap-3">
               {history.map((item) => (
                 <Link key={item.appointment.id} href={`/appointments/${item.appointment.id}`}>
                   <Card>
-                    <div className="font-semibold">{formatLongDate(item.appointment.startAt)}</div>
+                    <div className="font-semibold">{formatLongDate(item.appointment.startAt, dateLocale)}</div>
                     <div className="text-sm">{item.service.name}</div>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-sm text-[var(--tg-subtitle-text-color)]">
@@ -105,22 +107,22 @@ export default function ClientProfilePage() {
         </div>
 
         <div className="mt-6 flex flex-col gap-3">
-          <SectionHeader title="Actions" />
-          <Button onClick={() => router.push(`/appointments/new?clientId=${client.id}`)}>Book appointment</Button>
+          <SectionHeader title={t.actions} />
+          <Button onClick={() => router.push(`/appointments/new?clientId=${client.id}`)}>{t.bookAppointment}</Button>
           <Button variant="secondary" onClick={() => router.push(`/messages/new?clientId=${client.id}&channel=sms`)}>
-            Send SMS
+            {t.sendSms}
           </Button>
           <Button
             variant="secondary"
             onClick={() => router.push(`/messages/new?clientId=${client.id}&channel=telegram`)}
           >
-            Send Telegram
+            {t.sendTelegram}
           </Button>
           <Button variant="ghost" onClick={() => router.push(`/clients/${client.id}/edit`)}>
-            Edit client
+            {t.editClient}
           </Button>
           <a href={telHref(client.phone)} className="text-center text-sm text-[var(--tg-accent-text-color)]">
-            Call
+            {t.call}
           </a>
         </div>
       </div>

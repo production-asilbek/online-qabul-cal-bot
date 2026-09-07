@@ -6,29 +6,31 @@ import { useAppStore } from "@/lib/hooks/use-store";
 import { getMonthStats } from "@/lib/services/appointments";
 import { getCurrentBusiness } from "@/lib/services/businesses";
 import { formatPrice } from "@/lib/utils/format";
+import { useI18n } from "@/lib/i18n/provider";
 
 export default function DashboardPage() {
   useAppStore();
+  const { t } = useI18n();
   const stats = getMonthStats();
   const business = getCurrentBusiness();
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Overview" backHref="/more" />
+      <ScreenHeader title={t.overview} backHref="/more" />
       <div className="grid grid-cols-2 gap-3 px-4">
-        <Stat label="Today's appointments" value={stats.today} />
-        <Stat label="Upcoming" value={stats.upcoming} />
-        <Stat label="Clients" value={stats.clients} />
-        <Stat label="This month" value={stats.appointments} />
+        <Stat label={t.todayAppointments} value={stats.today} />
+        <Stat label={t.upcoming} value={stats.upcoming} />
+        <Stat label={t.clients} value={stats.clients} />
+        <Stat label={t.thisMonth} value={stats.appointments} />
       </div>
       <div className="mt-4 px-4">
         <Card>
-          <p className="text-sm text-[var(--tg-subtitle-text-color)]">This month</p>
+          <p className="text-sm text-[var(--tg-subtitle-text-color)]">{t.thisMonth}</p>
           <div className="mt-4 grid grid-cols-2 gap-4">
-            <Mini label="Completed" value={stats.completed} />
-            <Mini label="Cancelled" value={stats.cancelled} />
-            <Mini label="No-show" value={stats.noShow} />
-            <Mini label="Revenue" value={formatPrice(stats.revenue, business.currency)} />
+            <Mini label={t.completed} value={stats.completed} />
+            <Mini label={t.cancelled} value={stats.cancelled} />
+            <Mini label={t.noShow} value={stats.noShow} />
+            <Mini label={t.revenue} value={formatPrice(stats.revenue, business.currency)} />
           </div>
         </Card>
       </div>

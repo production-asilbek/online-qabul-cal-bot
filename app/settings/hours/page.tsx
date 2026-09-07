@@ -7,15 +7,15 @@ import { Card } from "@/components/ui/card";
 import { useAppStore } from "@/lib/hooks/use-store";
 import { getWorkingHours, updateWorkingHours } from "@/lib/services/businesses";
 import { haptic } from "@/lib/telegram";
+import { useI18n, weekdayName } from "@/lib/i18n/provider";
 import type { WorkingHours } from "@/types";
-
-const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export default function HoursPage() {
   useAppStore();
+  const { t } = useI18n();
   const initial = getWorkingHours();
   const [hours, setHours] = useState<WorkingHours[]>(
-    DAYS.map((_, weekday) => initial.find((item) => item.weekday === weekday) ?? {
+    [0, 1, 2, 3, 4, 5, 6].map((weekday) => initial.find((item) => item.weekday === weekday) ?? {
       id: `wh_${weekday}`,
       businessId: "",
       weekday,
@@ -27,7 +27,7 @@ export default function HoursPage() {
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Working hours" backHref="/settings" />
+      <ScreenHeader title={t.workingHours} backHref="/settings" />
       <div className="flex flex-col gap-3 px-4">
         {hours
           .slice(1)
@@ -35,7 +35,7 @@ export default function HoursPage() {
           .map((day) => (
             <Card key={day.weekday}>
               <div className="mb-3 flex items-center justify-between">
-                <div className="font-semibold">{DAYS[day.weekday]}</div>
+                <div className="font-semibold">{weekdayName(t, day.weekday)}</div>
                 <label className="text-sm">
                   <input
                     type="checkbox"
@@ -51,11 +51,11 @@ export default function HoursPage() {
                       );
                     }}
                   />
-                  Open
+                  {t.open}
                 </label>
               </div>
               {day.isClosed ? (
-                <p className="text-sm text-[var(--tg-hint-color)]">Closed</p>
+                <p className="text-sm text-[var(--tg-hint-color)]">{t.closed}</p>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   <input
@@ -96,7 +96,7 @@ export default function HoursPage() {
             haptic("success");
           }}
         >
-          Save hours
+          {t.saveHours}
         </Button>
       </div>
     </main>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { useTelegramBack } from "@/lib/hooks/use-telegram-back";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function ScreenHeader({
   title,
@@ -14,13 +15,14 @@ export function ScreenHeader({
   action?: React.ReactNode;
 }) {
   useTelegramBack(Boolean(backHref));
+  const { t } = useI18n();
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-2 bg-[var(--tg-header-bg-color)]/90 px-4 py-3 backdrop-blur-md">
       {backHref ? (
         <Link
           href={backHref}
-          aria-label="Back"
+          aria-label={t.back}
           className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--tg-accent-text-color)]"
         >
           <ChevronLeft size={26} />

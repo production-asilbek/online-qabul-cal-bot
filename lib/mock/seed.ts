@@ -81,8 +81,9 @@ export function createSeed(): DatabaseSnapshot {
     businesses: [
       {
         id: IDS.business,
-        name: "STOM Clinic",
+        name: "STOM Klinika",
         type: "dental",
+        category: "medical service",
         timezone: "Asia/Tashkent",
         currency: "USD",
         phone: "+998 71 200 00 00",

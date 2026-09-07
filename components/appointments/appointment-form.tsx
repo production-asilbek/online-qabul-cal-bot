@@ -20,9 +20,11 @@ import { combineDateAndTime, formatTime, toDateInput } from "@/lib/utils/date";
 import { formatDuration, fullName } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
 import { useAppStore } from "@/lib/hooks/use-store";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function AppointmentForm({ appointmentId }: { appointmentId?: string }) {
   useAppStore();
+  const { t } = useI18n();
   const router = useRouter();
   const params = useSearchParams();
   const existing = appointmentId ? getAppointment(appointmentId) : null;
@@ -87,7 +89,7 @@ export function AppointmentForm({ appointmentId }: { appointmentId?: string }) {
       haptic("success");
       setSuccessId(created.id);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t.somethingWrong);
     }
   });
 
@@ -104,9 +106,9 @@ export function AppointmentForm({ appointmentId }: { appointmentId?: string }) {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4 px-4 pb-8">
       {error ? <ErrorBanner message={error} /> : null}
-      <Field label="Client">
+      <Field label={t.client}>
         <select className="select-field" {...form.register("clientId")}>
-          <option value="">Select client</option>
+          <option value="">{t.selectClient}</option>
           {clients.map((client) => (
             <option key={client.id} value={client.id}>
               {fullName(client)}
@@ -114,7 +116,7 @@ export function AppointmentForm({ appointmentId }: { appointmentId?: string }) {
           ))}
         </select>
       </Field>
-      <Field label="Service">
+      <Field label={t.services}>
         <select
           className="select-field"
           {...form.register("serviceId")}
@@ -124,47 +126,47 @@ export function AppointmentForm({ appointmentId }: { appointmentId?: string }) {
             if (next) form.setValue("durationMin", next.durationMin);
           }}
         >
-          <option value="">Select service</option>
+          <option value="">{t.selectService}</option>
           {services.map((service) => (
             <option key={service.id} value={service.id}>
-              {service.name} · {formatDuration(service.durationMin)}
+              {service.name} · {formatDuration(service.durationMin, t)}
             </option>
           ))}
         </select>
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Date">
+        <Field label={t.date}>
           <Input type="date" {...form.register("date")} />
         </Field>
-        <Field label="Time">
+        <Field label={t.time}>
           <Input type="time" {...form.register("time")} />
         </Field>
       </div>
-      <Field label="Duration">
+      <Field label={t.duration}>
         <Input type="number" min={10} step={5} {...form.register("durationMin", { valueAsNumber: true })} />
       </Field>
-      <Field label="Staff">
+      <Field label={t.staff}>
         <select className="select-field" {...form.register("staffId")}>
-          <option value="">Select</option>
+          <option value="">{t.selectStaff}</option>
           {staff.map((member) => (
             <option key={member.id} value={member.id}>
-              {member.title.startsWith("Dentist") ? `Dr. ${member.firstName}` : fullName(member)} · {member.title}
+              {member.title.toLowerCase().includes("dentist") ? `${t.dentistPrefix} ${member.firstName}` : fullName(member)} · {member.title}
             </option>
           ))}
         </select>
       </Field>
-      <Field label="Notes">
-        <Textarea placeholder="Optional" {...form.register("notes")} />
+      <Field label={t.notes}>
+        <Textarea placeholder={t.optional} {...form.register("notes")} />
       </Field>
       <label className="flex items-center gap-3 rounded-2xl bg-[var(--tg-section-bg-color)] px-4 py-3">
         <input type="checkbox" className="h-5 w-5" {...form.register("reminderEnabled")} />
-        <span className="font-medium">Send reminder</span>
+        <span className="font-medium">{t.sendReminder}</span>
       </label>
       {form.formState.errors.clientId ? (
-        <ErrorBanner message={Object.values(form.formState.errors)[0]?.message ?? "Please complete the form."} />
+        <ErrorBanner message={Object.values(form.formState.errors)[0]?.message ?? t.completeForm} />
       ) : null}
       <Button type="submit" size="lg" className="mt-2 w-full">
-        {existing ? "Save appointment" : "Create appointment"}
+        {existing ? t.saveAppointment : t.createAppointment}
       </Button>
     </form>
   );
@@ -179,6 +181,7 @@ function SuccessState({
   onDone: () => void;
   onView: () => void;
 }) {
+  const { t } = useI18n();
   const display = getAppointment(appointmentId);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -211,19 +214,19 @@ function SuccessState({
       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[color-mix(in_srgb,#34C759_16%,transparent)] text-2xl">
         ✓
       </div>
-      <h2 className="text-2xl font-semibold">Appointment created</h2>
+      <h2 className="text-2xl font-semibold">{t.appointmentCreated}</h2>
       <p className="mt-2 text-[var(--tg-subtitle-text-color)]">
         {display ? `${fullName(display.client)} · ${formatTime(display.appointment.startAt)}` : null}
       </p>
       <div className="mt-6 flex flex-col gap-3">
         <Button onClick={sendConfirmation} disabled={sending || sent}>
-          {sent ? "Confirmation sent" : "Send confirmation"}
+          {sent ? t.confirmationSent : t.sendConfirmation}
         </Button>
         <Button variant="secondary" onClick={onView}>
-          View appointment
+          {t.viewAppointment}
         </Button>
         <Button variant="ghost" onClick={onDone}>
-          Back to today
+          {t.backToToday}
         </Button>
       </div>
     </div>

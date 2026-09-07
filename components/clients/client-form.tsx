@@ -10,8 +10,10 @@ import { clientSchema, type ClientInput } from "@/lib/validation/schemas";
 import { createClient, getClient, getTags, updateClient } from "@/lib/services/clients";
 import { track } from "@/lib/services/analytics";
 import { haptic } from "@/lib/telegram";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function ClientForm({ clientId }: { clientId?: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const existing = clientId ? getClient(clientId) : null;
   const tags = getTags();
@@ -54,38 +56,38 @@ export function ClientForm({ clientId }: { clientId?: string }) {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4 px-4 pb-8">
       {form.formState.errors.firstName || form.formState.errors.phone ? (
-        <ErrorBanner message={Object.values(form.formState.errors)[0]?.message ?? "Please complete the form."} />
+        <ErrorBanner message={Object.values(form.formState.errors)[0]?.message ?? t.completeForm} />
       ) : null}
       <div className="grid grid-cols-2 gap-3">
-        <Field label="First name">
+        <Field label={t.firstName}>
           <Input {...form.register("firstName")} />
         </Field>
-        <Field label="Last name">
+        <Field label={t.lastName}>
           <Input {...form.register("lastName")} />
         </Field>
       </div>
-      <Field label="Phone">
+      <Field label={t.phone}>
         <Input inputMode="tel" placeholder="+998 XX XXX XX XX" {...form.register("phone")} />
       </Field>
-      <Field label="Telegram username">
+      <Field label={t.telegramUsername}>
         <Input placeholder="@username" {...form.register("telegramUsername")} />
       </Field>
-      <Field label="Telegram ID">
+      <Field label={t.telegramId}>
         <Input inputMode="numeric" {...form.register("telegramId")} />
       </Field>
-      <Field label="Date of birth">
+      <Field label={t.dateOfBirth}>
         <Input type="date" {...form.register("dateOfBirth")} />
       </Field>
-      <Field label="Notes">
+      <Field label={t.notes}>
         <Textarea {...form.register("notes")} />
       </Field>
       {tags.length > 0 ? (
         <p className="text-xs text-[var(--tg-hint-color)]">
-          Tags: {tags.map((tag) => tag.name).join(", ")}
+          {t.tags}: {tags.map((tag) => tag.name).join(", ")}
         </p>
       ) : null}
       <Button type="submit" size="lg" className="w-full">
-        Save client
+        {t.saveClient}
       </Button>
     </form>
   );

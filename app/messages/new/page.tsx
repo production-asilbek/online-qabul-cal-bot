@@ -13,9 +13,11 @@ import { fullName } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
 import type { MessageChannel } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/lib/i18n/provider";
 
 function ComposeInner() {
   useAppStore();
+  const { t } = useI18n();
   const router = useRouter();
   const params = useSearchParams();
   const clients = getClients("", 1, 200).items;
@@ -31,7 +33,7 @@ function ComposeInner() {
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Send message" backHref="/messages" />
+      <ScreenHeader title={t.sendMessage} backHref="/messages" />
       <form
         className="flex flex-col gap-4 px-4"
         onSubmit={async (event) => {
@@ -41,14 +43,14 @@ function ComposeInner() {
           try {
             const message = await sendMessage({ clientId, channel, content, templateId: templateId || undefined });
             if (message?.status === "failed") {
-              setError("Message couldn't be sent.");
+              setError(t.messageFailed);
               haptic("error");
               return;
             }
             haptic("success");
             router.push("/messages");
           } catch {
-            setError("Message couldn't be sent.");
+            setError(t.messageFailed);
             haptic("error");
           } finally {
             setSending(false);
@@ -59,13 +61,13 @@ function ComposeInner() {
           <div className="flex flex-col gap-2">
             <ErrorBanner message={error} />
             <Button type="submit" variant="secondary">
-              Try again
+              {t.tryAgain}
             </Button>
           </div>
         ) : null}
-        <Field label="Client">
+        <Field label={t.client}>
           <select className="select-field" value={clientId} onChange={(e) => setClientId(e.target.value)} required>
-            <option value="">Select client</option>
+            <option value="">{t.selectClient}</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
                 {fullName(client)}
@@ -73,14 +75,14 @@ function ComposeInner() {
             ))}
           </select>
         </Field>
-        <Field label="Channel">
+        <Field label={t.channel}>
           <select className="select-field" value={channel} onChange={(e) => setChannel(e.target.value as MessageChannel)}>
             <option value="sms">SMS</option>
             <option value="telegram">Telegram</option>
             <option value="whatsapp">WhatsApp</option>
           </select>
         </Field>
-        <Field label="Template">
+        <Field label={t.template}>
           <select
             className="select-field"
             value={templateId}
@@ -90,7 +92,7 @@ function ComposeInner() {
               if (template) setContent(template.content);
             }}
           >
-            <option value="">Custom message</option>
+            <option value="">{t.customMessage}</option>
             {templates.map((template) => (
               <option key={template.id} value={template.id}>
                 {template.name}
@@ -98,11 +100,11 @@ function ComposeInner() {
             ))}
           </select>
         </Field>
-        <Field label="Message" hint="Variables: {{client_name}} {{business_name}} {{date}} {{time}} {{service}} {{staff}}">
+        <Field label={t.message} hint={t.messageVars}>
           <Textarea value={content} onChange={(e) => setContent(e.target.value)} required />
         </Field>
         <Button type="submit" size="lg" disabled={sending}>
-          {sending ? "Sending…" : "Send"}
+          {sending ? t.sending : t.send}
         </Button>
       </form>
     </main>

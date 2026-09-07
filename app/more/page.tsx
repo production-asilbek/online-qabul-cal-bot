@@ -6,14 +6,14 @@ import { ScreenHeader } from "@/components/layout/screen-header";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Card } from "@/components/ui/card";
 import { useAppStore } from "@/lib/hooks/use-store";
-import { getCurrentBusiness, getCurrentUser } from "@/lib/services/businesses";
-import { fullName } from "@/lib/utils/format";
-import { businessTypeLabel, useI18n } from "@/lib/i18n/provider";
+import { getBusinessCategory, getCurrentBusiness } from "@/lib/services/businesses";
+import { categoryLabel, useI18n } from "@/lib/i18n/provider";
+import { useGoogleAccount } from "@/lib/auth/display-name";
 
 export default function MorePage() {
   useAppStore();
   const { t } = useI18n();
-  const user = getCurrentUser();
+  const { fullName: displayName } = useGoogleAccount();
   const business = getCurrentBusiness();
 
   const links = [
@@ -23,17 +23,16 @@ export default function MorePage() {
     { href: "/messages", label: t.messages },
     { href: "/settings", label: t.settings },
     { href: "/clients/import", label: t.importClients },
-    ...(process.env.NODE_ENV === "production" ? [] : [{ href: "/dev", label: t.developer }]),
   ];
 
   return (
     <main className="pb-8 pt-2">
       <ScreenHeader title={t.more} />
       <Card className="mx-4 mb-5">
-        <div className="text-sm text-[var(--tg-subtitle-text-color)]">{businessTypeLabel(t, business.type)}</div>
-        <div className="text-xl font-semibold">{business.name}</div>
+        <div className="text-xl font-semibold">{displayName}</div>
+        <div className="mt-1 text-[15px]">{business.name}</div>
         <div className="mt-1 text-sm text-[var(--tg-subtitle-text-color)]">
-          {fullName(user)} · {t.owner}
+          {categoryLabel(t, getBusinessCategory(business))}
         </div>
       </Card>
       <div className="mx-4 overflow-hidden rounded-[18px] bg-[var(--tg-section-bg-color)]">
@@ -49,6 +48,11 @@ export default function MorePage() {
         ))}
       </div>
       <LanguageSwitcher />
+      <form action="/api/auth/logout" method="POST" className="mx-4 mt-5">
+        <button type="submit" className="w-full py-3 text-center text-sm font-semibold text-[var(--tg-destructive-text-color)]">
+          {t.signOut}
+        </button>
+      </form>
     </main>
   );
 }

@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { CalendarPlus, MessageSquare, Plus, UserPlus } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { haptic } from "@/lib/telegram";
+import { useI18n } from "@/lib/i18n/provider";
 
 export function QuickActions() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { t } = useI18n();
 
   const go = (href: string) => {
     haptic("light");
@@ -19,7 +21,7 @@ export function QuickActions() {
   return (
     <>
       <button
-        aria-label="Quick actions"
+        aria-label={t.quickActions}
         onClick={() => {
           haptic("medium");
           setOpen(true);
@@ -28,11 +30,11 @@ export function QuickActions() {
       >
         <Plus size={26} />
       </button>
-      <Sheet open={open} onClose={() => setOpen(false)} title="Quick actions">
+      <Sheet open={open} onClose={() => setOpen(false)} title={t.quickActions}>
         <div className="flex flex-col gap-2">
-          <ActionRow icon={<CalendarPlus size={20} />} label="New appointment" onClick={() => go("/appointments/new")} />
-          <ActionRow icon={<UserPlus size={20} />} label="Add client" onClick={() => go("/clients/new")} />
-          <ActionRow icon={<MessageSquare size={20} />} label="Send message" onClick={() => go("/messages/new")} />
+          <ActionRow icon={<CalendarPlus size={20} />} label={t.newAppointment} onClick={() => go("/appointments/new")} />
+          <ActionRow icon={<UserPlus size={20} />} label={t.addClient} onClick={() => go("/clients/new")} />
+          <ActionRow icon={<MessageSquare size={20} />} label={t.sendMessage} onClick={() => go("/messages/new")} />
         </div>
       </Sheet>
     </>

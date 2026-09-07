@@ -8,9 +8,11 @@ import { Field, Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { importClients, parseCsv, previewImport, type ImportColumnMap } from "@/lib/services/import";
 import { useAppStore } from "@/lib/hooks/use-store";
+import { interpolate, useI18n } from "@/lib/i18n/provider";
 
 export default function ImportClientsPage() {
   useAppStore();
+  const { t } = useI18n();
   const router = useRouter();
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
@@ -21,10 +23,10 @@ export default function ImportClientsPage() {
 
   return (
     <main className="pb-8">
-      <ScreenHeader title="Import clients" backHref="/clients" />
+      <ScreenHeader title={t.importClients} backHref="/clients" />
       <div className="flex flex-col gap-4 px-4">
         <p className="text-sm text-[var(--tg-subtitle-text-color)]">
-          Upload a CSV, map columns, then preview before import.
+          {t.importHint}
         </p>
         <Input
           type="file"
@@ -46,7 +48,7 @@ export default function ImportClientsPage() {
         />
         {headers.length > 0 ? (
           <Card className="flex flex-col gap-3">
-            <Field label="Name">
+            <Field label={t.name}>
               <select className="select-field" value={map.name ?? ""} onChange={(e) => setMap({ ...map, name: e.target.value })}>
                 <option value="">—</option>
                 {headers.map((header) => (
@@ -54,7 +56,7 @@ export default function ImportClientsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Phone">
+            <Field label={t.phone}>
               <select className="select-field" value={map.phone} onChange={(e) => setMap({ ...map, phone: e.target.value })}>
                 {headers.map((header) => (
                   <option key={header}>{header}</option>
@@ -69,7 +71,7 @@ export default function ImportClientsPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Notes">
+            <Field label={t.notes}>
               <select className="select-field" value={map.notes ?? ""} onChange={(e) => setMap({ ...map, notes: e.target.value })}>
                 <option value="">—</option>
                 {headers.map((header) => (
@@ -81,7 +83,7 @@ export default function ImportClientsPage() {
         ) : null}
         {preview.length > 0 ? (
           <div>
-            <p className="mb-2 text-sm font-semibold">Preview</p>
+            <p className="mb-2 text-sm font-semibold">{t.preview}</p>
             <div className="overflow-hidden rounded-2xl bg-[var(--tg-section-bg-color)]">
               {preview.slice(0, 8).map((row, index) => (
                 <div key={`${row.phone}-${index}`} className="border-b border-[color-mix(in_srgb,var(--tg-hint-color)_12%,transparent)] px-4 py-3 text-sm">
@@ -100,13 +102,13 @@ export default function ImportClientsPage() {
                 setCount(imported);
               }}
             >
-              Import {preview.filter((row) => row.valid).length} clients
+              {interpolate(t.importCount, { n: preview.filter((row) => row.valid).length })}
             </Button>
           </div>
         ) : null}
         {count != null ? (
           <Button variant="secondary" onClick={() => router.push("/clients")}>
-            Imported {count}. Open clients
+            {interpolate(t.importedCount, { n: count })}
           </Button>
         ) : null}
       </div>

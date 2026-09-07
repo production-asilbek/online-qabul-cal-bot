@@ -50,6 +50,7 @@ export interface Business {
   id: string;
   name: string;
   type: BusinessType;
+  category?: string;
   timezone: string;
   currency: string;
   phone?: string;
