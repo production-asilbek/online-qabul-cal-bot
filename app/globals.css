@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --tg-bg-color: #f2f2f7;
+  --tg-text-color: #111827;
+  --tg-hint-color: #8e8e93;
+  --tg-link-color: #187acc;
+  --tg-button-color: #187acc;
+  --tg-button-text-color: #ffffff;
+  --tg-secondary-bg-color: #ffffff;
+  --tg-header-bg-color: #f2f2f7;
+  --tg-accent-text-color: #187acc;
+  --tg-section-bg-color: #ffffff;
+  --tg-section-header-text-color: #6b7280;
+  --tg-subtitle-text-color: #6b7280;
+  --tg-destructive-text-color: #e53935;
+  --tg-bottom-bar-bg-color: #ffffff;
+  --background: var(--tg-bg-color);
+  --foreground: var(--tg-text-color);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--tg-bg-color);
+  color: var(--tg-text-color);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.select-field {
+  height: 3rem;
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--tg-hint-color) 24%, transparent);
+  background: var(--tg-section-bg-color);
+  padding: 0 1rem;
+  color: var(--tg-text-color);
+  outline: none;
+}
+
+.select-field:focus {
+  border-color: var(--tg-button-color);
+}
