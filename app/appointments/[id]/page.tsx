@@ -1,16 +1,17 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ScreenHeader } from "@/components/layout/screen-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useAppStore } from "@/lib/hooks/use-store";
 import { getAppointment, updateAppointmentStatus } from "@/lib/services/appointments";
 import { track } from "@/lib/services/analytics";
-import { sendMessage, formatAppointmentVariables } from "@/lib/services/messages";
+import { sendMessage, formatAppointmentVariables, channelForClient } from "@/lib/services/messages";
 import { formatLongDate, formatTime } from "@/lib/utils/date";
 import { fullName } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
@@ -34,6 +35,7 @@ export default function AppointmentDetailPage() {
   const router = useRouter();
   const appointmentId = params.id;
   const display = getAppointment(appointmentId);
+  const [reminderError, setReminderError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!appointmentId) return;
@@ -99,10 +101,11 @@ export default function AppointmentDetailPage() {
         <Button
           variant="secondary"
           onClick={async () => {
+            setReminderError(null);
             try {
               const message = await sendMessage({
                 clientId: display.client.id,
-                channel: display.client.telegramId ? "telegram" : "sms",
+                channel: channelForClient(display.client),
                 content:
                   "Hello {{client_name}}, this is a reminder about your appointment at {{business_name}} at {{time}}.",
                 ...formatAppointmentVariables(
@@ -111,14 +114,21 @@ export default function AppointmentDetailPage() {
                   fullName(display.staff),
                 ),
               });
-              haptic(message?.status === "failed" ? "error" : "success");
+              if (message?.status === "failed") {
+                setReminderError(message.error || t.messageFailed);
+                haptic("error");
+                return;
+              }
+              haptic("success");
             } catch {
+              setReminderError(t.messageFailed);
               haptic("error");
             }
           }}
         >
           {t.sendReminderAction}
         </Button>
+        {reminderError ? <ErrorBanner message={reminderError} /> : null}
         <Button variant="secondary" onClick={() => router.push(`/appointments/new?clientId=${display.client.id}`)}>
           {t.rebook}
         </Button>

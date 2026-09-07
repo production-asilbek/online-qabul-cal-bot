@@ -43,7 +43,7 @@ function ComposeInner() {
           try {
             const message = await sendMessage({ clientId, channel, content, templateId: templateId || undefined });
             if (message?.status === "failed") {
-              setError(t.messageFailed);
+              setError(message.error || t.messageFailed);
               haptic("error");
               return;
             }

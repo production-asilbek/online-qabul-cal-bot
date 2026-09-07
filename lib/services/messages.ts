@@ -81,6 +81,12 @@ export function buildTemplateVariables(clientId: string, extras: TemplateVariabl
   };
 }
 
+export function channelForClient(client: { phone?: string; telegramId?: number; telegramUsername?: string }): MessageChannel {
+  if (client.phone?.trim()) return "sms";
+  if (client.telegramId || client.telegramUsername) return "telegram";
+  return "sms";
+}
+
 export async function sendMessage(input: {
   clientId: string;
   channel: MessageChannel;

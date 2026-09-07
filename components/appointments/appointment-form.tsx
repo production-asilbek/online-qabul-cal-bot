@@ -15,7 +15,7 @@ import { getServices } from "@/lib/services/services";
 import { getStaff } from "@/lib/services/staff";
 import { scheduleRemindersForAppointment } from "@/lib/services/reminders";
 import { track } from "@/lib/services/analytics";
-import { sendMessage, formatAppointmentVariables } from "@/lib/services/messages";
+import { sendMessage, formatAppointmentVariables, channelForClient } from "@/lib/services/messages";
 import { combineDateAndTime, formatTime, toDateInput } from "@/lib/utils/date";
 import { formatDuration, fullName } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
@@ -185,14 +185,16 @@ function SuccessState({
   const display = getAppointment(appointmentId);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const sendConfirmation = async () => {
     if (!display) return;
     setSending(true);
+    setError(null);
     try {
       const message = await sendMessage({
         clientId: display.client.id,
-        channel: display.client.telegramId ? "telegram" : "sms",
+        channel: channelForClient(display.client),
         templateId: "tpl_2",
         content:
           "Hello {{client_name}}, your appointment at {{business_name}} is confirmed for {{date}} at {{time}}.",
@@ -203,6 +205,7 @@ function SuccessState({
         ),
       });
       if (message?.status === "failed") {
+        setError(message.error || t.messageFailed);
         haptic("error");
         return;
       }
@@ -222,6 +225,7 @@ function SuccessState({
       <p className="mt-2 text-[var(--tg-subtitle-text-color)]">
         {display ? `${fullName(display.client)} · ${formatTime(display.appointment.startAt)}` : null}
       </p>
+      {error ? <div className="mt-4 text-left"><ErrorBanner message={error} /></div> : null}
       <div className="mt-6 flex flex-col gap-3">
         <Button onClick={sendConfirmation} disabled={sending || sent}>
           {sent ? t.confirmationSent : t.sendConfirmation}

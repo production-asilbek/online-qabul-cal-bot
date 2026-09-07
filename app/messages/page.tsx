@@ -62,8 +62,14 @@ export default function MessagesPage() {
                       <div className="font-semibold">{client ? fullName(client) : t.client}</div>
                       <p className="mt-1 line-clamp-2 text-sm text-[var(--tg-subtitle-text-color)]">{message.content}</p>
                       <p className="mt-2 text-xs text-[var(--tg-hint-color)]">
-                        {message.channel.toUpperCase()} · {formatShortDate(message.createdAt, dateLocale)} {formatTime(message.createdAt)}
+                        {message.channel.toUpperCase()}
+                        {message.provider ? ` · ${message.provider}` : ""}
+                        {" · "}
+                        {formatShortDate(message.createdAt, dateLocale)} {formatTime(message.createdAt)}
                       </p>
+                      {message.error ? (
+                        <p className="mt-1 text-xs text-[#E5484D]">{message.error}</p>
+                      ) : null}
                     </div>
                     <span className="rounded-full bg-[var(--tg-bg-color)] px-2.5 py-1 text-[11px] font-semibold">
                       {messageStatusLabel(t, message.status)}
