@@ -5,12 +5,16 @@ import {
   SESSION_COOKIE,
   encodeSession,
   googleConfigured,
+  oauthOrigin,
   sessionCookieOptions,
 } from "@/lib/auth/session";
 
 export async function GET(request: Request) {
-  const origin = new URL(request.url).origin;
+  const origin = oauthOrigin(request);
   if (!googleConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.redirect(`${origin}/register?error=google-config`);
+    }
     const token = await encodeSession({
       id: "google-demo",
       email: "owner@qabul.app",
@@ -22,7 +26,7 @@ export async function GET(request: Request) {
   }
 
   const state = crypto.randomUUID();
-  const response = NextResponse.redirect(googleAuthUrl(state));
+  const response = NextResponse.redirect(googleAuthUrl(state, origin));
   response.cookies.set(OAUTH_STATE_COOKIE, state, {
     httpOnly: true,
     sameSite: "lax",

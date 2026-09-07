@@ -1,13 +1,11 @@
-import { appOrigin } from "./session";
-
-export function googleRedirectUri() {
-  return `${appOrigin()}/api/auth/google/callback`;
+export function googleRedirectUri(origin: string) {
+  return `${origin.replace(/\/$/, "")}/api/auth/google/callback`;
 }
 
-export function googleAuthUrl(state: string) {
+export function googleAuthUrl(state: string, origin: string) {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID ?? "",
-    redirect_uri: googleRedirectUri(),
+    redirect_uri: googleRedirectUri(origin),
     response_type: "code",
     scope: "openid email profile",
     prompt: "select_account",
@@ -16,12 +14,12 @@ export function googleAuthUrl(state: string) {
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
 
-export async function exchangeGoogleCode(code: string) {
+export async function exchangeGoogleCode(code: string, origin: string) {
   const body = new URLSearchParams({
     code,
     client_id: process.env.GOOGLE_CLIENT_ID ?? "",
     client_secret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    redirect_uri: googleRedirectUri(),
+    redirect_uri: googleRedirectUri(origin),
     grant_type: "authorization_code",
   });
   const response = await fetch("https://oauth2.googleapis.com/token", {

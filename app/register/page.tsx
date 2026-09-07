@@ -8,6 +8,7 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/lib/hooks/use-store";
 import { useAuth } from "@/lib/hooks/use-auth";
+import { isDemoGoogleUser } from "@/lib/auth/identity";
 import { completeRegistration, isRegistrationComplete } from "@/lib/auth/registration";
 import { applyGoogleProfile, finishRegistration, getCurrentBusiness } from "@/lib/services/businesses";
 import { setLocale, useI18n } from "@/lib/i18n/provider";
@@ -49,8 +50,12 @@ function RegisterInner() {
       router.replace("/");
       return;
     }
-    if (user) {
+    if (user && !isDemoGoogleUser(user)) {
       applyGoogleProfile(user.name);
+      setStep("service");
+      return;
+    }
+    if (user) {
       setStep("service");
       return;
     }
@@ -102,7 +107,9 @@ function RegisterInner() {
           <h1 className="mt-2 text-3xl font-semibold">{t.signInTitle}</h1>
           <p className="mt-3 text-[var(--tg-subtitle-text-color)]">{t.signInSubtitle}</p>
           {error ? (
-            <p className="mt-4 text-sm text-[var(--tg-destructive-text-color)]">{t.somethingWrong}</p>
+            <p className="mt-4 text-sm text-[var(--tg-destructive-text-color)]">
+              {error === "google-config" ? t.googleNotConfigured : t.somethingWrong}
+            </p>
           ) : null}
           <a
             href="/api/auth/google"

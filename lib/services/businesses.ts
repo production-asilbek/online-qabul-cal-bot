@@ -1,4 +1,5 @@
 import { formatISO } from "date-fns";
+import { isPlaceholderGoogleName } from "@/lib/auth/identity";
 import { mockStore } from "@/lib/mock/store";
 import type { Business, BusinessSettings, BusinessType, WorkingHours } from "@/types";
 
@@ -111,11 +112,13 @@ export function finishRegistration(name: string) {
 }
 
 export function applyGoogleProfile(name: string) {
+  if (isPlaceholderGoogleName(name)) return;
   mockStore.mutate((draft) => {
     const user = draft.users.find((item) => item.id === draft.currentUserId);
     if (!user) return;
     const [first, ...rest] = name.trim().split(/\s+/);
-    user.firstName = first || user.firstName;
+    if (!first || isPlaceholderGoogleName(first)) return;
+    user.firstName = first;
     if (rest.length) user.lastName = rest.join(" ");
     user.updatedAt = nowIso();
   });

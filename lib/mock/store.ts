@@ -1,5 +1,17 @@
+import { isPlaceholderGoogleName } from "@/lib/auth/identity";
 import type { DatabaseSnapshot } from "@/types";
 import { createSeed } from "./seed";
+
+function repairPlaceholderGoogleNames(data: DatabaseSnapshot) {
+  const seedUser = createSeed().users[0];
+  for (const user of data.users) {
+    const full = `${user.firstName} ${user.lastName ?? ""}`.trim();
+    if (isPlaceholderGoogleName(user.firstName) || isPlaceholderGoogleName(full)) {
+      user.firstName = seedUser.firstName;
+      user.lastName = seedUser.lastName;
+    }
+  }
+}
 
 const STORAGE_KEY = "stom-assistant-db-v1";
 
@@ -34,6 +46,7 @@ class MockStore {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       this.data = raw ? (JSON.parse(raw) as DatabaseSnapshot) : createSeed();
+      if (raw && this.data) repairPlaceholderGoogleNames(this.data);
     } catch {
       this.data = createSeed();
     }
