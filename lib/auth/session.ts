@@ -83,21 +83,29 @@ export async function getSessionUser() {
   return decodeSession(jar.get(SESSION_COOKIE)?.value);
 }
 
+const CANONICAL_APP_ORIGIN = "https://online-qabul-cal-bot.vercel.app";
+
 export function appOrigin() {
-  return (process.env.NEXT_PUBLIC_APP_URL || "https://online-qabul-cal-bot.vercel.app").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_APP_URL || CANONICAL_APP_ORIGIN).replace(/\/$/, "");
 }
 
-export function oauthOrigin(request: Request) {
-  if (process.env.NODE_ENV === "production") {
-    return appOrigin();
-  }
+function requestHostOrigin(request: Request) {
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
   const host = forwardedHost || request.headers.get("host")?.split(",")[0]?.trim();
   const proto =
     request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ||
     (host?.startsWith("localhost") || host?.startsWith("127.") ? "http" : "https");
-  if (host) return `${proto}://${host}`;
-  return new URL(request.url).origin;
+  if (!host) return "";
+  return `${proto}://${host}`.replace(/\/$/, "");
+}
+
+export function oauthOrigin(request: Request) {
+  const fromRequest = requestHostOrigin(request);
+  if (fromRequest === CANONICAL_APP_ORIGIN) return CANONICAL_APP_ORIGIN;
+  if (fromRequest.startsWith("http://localhost") || fromRequest.startsWith("http://127.0.0.1")) {
+    return fromRequest;
+  }
+  return CANONICAL_APP_ORIGIN;
 }
 
 export function googleConfigured() {
