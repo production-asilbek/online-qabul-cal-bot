@@ -5,10 +5,8 @@ export function fullName(person: { firstName: string; lastName?: string }) {
   return [person.firstName, person.lastName].filter(Boolean).join(" ");
 }
 
-export function formatPrice(amount: number, currency = "USD") {
+export function formatPrice(amount: number, _currency = "USD") {
   return new Intl.NumberFormat("uz-UZ", {
-    style: "currency",
-    currency,
     maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
   }).format(amount);
 }

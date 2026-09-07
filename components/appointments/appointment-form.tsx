@@ -190,7 +190,7 @@ function SuccessState({
     if (!display) return;
     setSending(true);
     try {
-      await sendMessage({
+      const message = await sendMessage({
         clientId: display.client.id,
         channel: display.client.telegramId ? "telegram" : "sms",
         templateId: "tpl_2",
@@ -202,6 +202,10 @@ function SuccessState({
           fullName(display.staff),
         ),
       });
+      if (message?.status === "failed") {
+        haptic("error");
+        return;
+      }
       setSent(true);
       haptic("success");
     } finally {

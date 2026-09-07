@@ -21,6 +21,7 @@ async function deliver(channel: MessageChannel, to: string, content: string): Pr
   if (channel === "sms") {
     const response = await fetch("/api/sms/send", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: to, message: content }),
     });

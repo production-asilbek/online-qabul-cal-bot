@@ -20,6 +20,46 @@ export function eskizEmailHint() {
   return `${email.slice(0, 2)}***${email.slice(at)}`;
 }
 
+export function eskizPhone(phone: string) {
+  let mobile = digitsOnly(phone);
+  if (mobile.startsWith("8") && mobile.length === 12) {
+    mobile = `998${mobile.slice(1)}`;
+  }
+  if (mobile.length === 9) {
+    mobile = `998${mobile}`;
+  }
+  return mobile;
+}
+
+async function parseJson(response: Response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return { message: text || `Eskiz HTTP ${response.status}` };
+  }
+}
+
+function tokenFrom(body: Record<string, unknown>) {
+  const data = body.data as { token?: string } | undefined;
+  return data?.token;
+}
+
+async function loginRequest(email: string, password: string, mode: "form" | "json") {
+  if (mode === "form") {
+    const form = new FormData();
+    form.set("email", email);
+    form.set("password", password);
+    return fetch(`${ESKIZ_BASE}/api/auth/login`, { method: "POST", body: form });
+  }
+
+  return fetch(`${ESKIZ_BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+}
+
 async function login() {
   if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
     return cachedToken.value;
@@ -31,39 +71,69 @@ async function login() {
     throw new Error("Eskiz credentials are not configured.");
   }
 
-  const response = await fetch(`${ESKIZ_BASE}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-  const body = (await response.json()) as { data?: { token?: string }; message?: string };
-  const token = body.data?.token;
-  if (!response.ok || !token) {
-    throw new Error(body.message ?? `Eskiz login failed (${response.status})`);
+  let lastError = "Eskiz login failed";
+  for (const mode of ["form", "json"] as const) {
+    const response = await loginRequest(email, password, mode);
+    const body = await parseJson(response);
+    const token = tokenFrom(body);
+    if (response.ok && token) {
+      cachedToken = { value: token, expiresAt: Date.now() + 25 * 24 * 60 * 60 * 1000 };
+      return token;
+    }
+    lastError = String(body.message ?? `Eskiz login failed (${response.status})`);
   }
 
-  cachedToken = { value: token, expiresAt: Date.now() + 25 * 24 * 60 * 60 * 1000 };
-  return token;
+  throw new Error(lastError);
+}
+
+async function refreshToken(token: string) {
+  const response = await fetch(`${ESKIZ_BASE}/api/auth/refresh`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await parseJson(response);
+  const next = tokenFrom(body) ?? token;
+  if (!response.ok) {
+    cachedToken = null;
+    return login();
+  }
+  cachedToken = { value: next, expiresAt: Date.now() + 25 * 24 * 60 * 60 * 1000 };
+  return next;
+}
+
+async function authorizedFetch(path: string, init: RequestInit = {}, retry = true): Promise<Response> {
+  const token = await login();
+  const response = await fetch(`${ESKIZ_BASE}${path}`, {
+    ...init,
+    headers: {
+      ...(init.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (response.status === 401 && retry) {
+    cachedToken = null;
+    try {
+      await refreshToken(token);
+    } catch {
+      await login();
+    }
+    return authorizedFetch(path, init, false);
+  }
+  return response;
 }
 
 export async function eskizUser() {
-  const token = await login();
-  const response = await fetch(`${ESKIZ_BASE}/api/auth/user`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const body = (await response.json()) as {
-    data?: { email?: string; balance?: number; status?: string; name?: string };
-    message?: string;
-  };
+  const response = await authorizedFetch("/api/auth/user");
+  const body = await parseJson(response);
   if (!response.ok) {
-    throw new Error(body.message ?? `Eskiz user lookup failed (${response.status})`);
+    throw new Error(String(body.message ?? `Eskiz user lookup failed (${response.status})`));
   }
-  return body.data ?? {};
+  return (body.data as Record<string, unknown> | undefined) ?? {};
 }
 
 export async function sendEskizSms(phone: string, message: string): Promise<NotificationResult> {
-  const mobile = digitsOnly(phone);
-  if (mobile.length < 12) {
+  const mobile = eskizPhone(phone);
+  if (mobile.length !== 12 || !mobile.startsWith("998")) {
     return {
       success: false,
       messageId: crypto.randomUUID(),
@@ -74,36 +144,41 @@ export async function sendEskizSms(phone: string, message: string): Promise<Noti
   }
 
   try {
-    const token = await login();
-    const response = await fetch(`${ESKIZ_BASE}/api/message/sms/send`, {
+    const form = new FormData();
+    form.set("mobile_phone", mobile);
+    form.set("message", message);
+    form.set("from", eskizFrom());
+
+    let response = await authorizedFetch("/api/message/sms/send", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        mobile_phone: mobile,
-        message,
-        from: eskizFrom(),
-      }),
+      body: form,
     });
-    const body = (await response.json()) as {
-      id?: string | number;
-      status?: string;
-      message?: string;
-    };
+    let body = await parseJson(response);
+    if (!response.ok && (response.status === 400 || response.status === 415 || response.status === 422)) {
+      response = await authorizedFetch("/api/message/sms/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mobile_phone: mobile,
+          message,
+          from: eskizFrom(),
+        }),
+      });
+      body = await parseJson(response);
+    }
+    const id = body.id ?? (body.data as { id?: string | number } | undefined)?.id;
     if (!response.ok) {
       return {
         success: false,
-        messageId: String(body.id ?? crypto.randomUUID()),
+        messageId: String(id ?? crypto.randomUUID()),
         status: "failed",
         provider: "eskiz",
-        error: body.message ?? `Eskiz send failed (${response.status})`,
+        error: String(body.message ?? `Eskiz send failed (${response.status})`),
       };
     }
     return {
       success: true,
-      messageId: String(body.id ?? crypto.randomUUID()),
+      messageId: String(id ?? crypto.randomUUID()),
       status: "queued",
       provider: "eskiz",
     };

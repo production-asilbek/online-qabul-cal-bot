@@ -100,7 +100,7 @@ export default function AppointmentDetailPage() {
           variant="secondary"
           onClick={async () => {
             try {
-              await sendMessage({
+              const message = await sendMessage({
                 clientId: display.client.id,
                 channel: display.client.telegramId ? "telegram" : "sms",
                 content:
@@ -111,7 +111,7 @@ export default function AppointmentDetailPage() {
                   fullName(display.staff),
                 ),
               });
-              haptic("success");
+              haptic(message?.status === "failed" ? "error" : "success");
             } catch {
               haptic("error");
             }
