@@ -7,7 +7,7 @@ function botToken() {
 }
 
 function appUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_APP_URL || "https://online-qabul-cal-bot.vercel.app").replace(/\/$/, "");
 }
 
 export async function telegramCall<T>(method: string, body?: Record<string, unknown>) {
@@ -41,7 +41,7 @@ export function webAppKeyboard() {
   if (!url) return undefined;
   return {
     inline_keyboard: [
-      [{ text: "Open calendar", web_app: { url } }],
+      [{ text: "Open", web_app: { url } }],
     ],
   };
 }

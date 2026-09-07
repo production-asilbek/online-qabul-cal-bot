@@ -1,26 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import Script from "next/script";
 import { AppShell } from "@/components/layout/app-shell";
 import { StoreProvider } from "@/lib/hooks/use-store";
+import { LanguageProvider } from "@/lib/i18n/provider";
 import "./globals.css";
 
-const geistSans = Geist({
+const inter = Inter({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext", "cyrillic", "cyrillic-ext"],
 });
 
 export const metadata: Metadata = {
-  title: "Business Assistant",
-  description: "Calendar, clients, and reminders inside Telegram.",
+  title: "Qabul Kalendarim",
+  description: "Telegram ichida kalendar, mijozlar va eslatmalar.",
   appleWebApp: {
     capable: true,
-    title: "Business Assistant",
+    title: "Qabul Kalendarim",
     statusBarStyle: "default",
   },
 };
@@ -37,14 +33,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="uz"
+      className={`${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full">
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
         <StoreProvider>
-          <AppShell>{children}</AppShell>
+          <LanguageProvider>
+            <AppShell>{children}</AppShell>
+          </LanguageProvider>
         </StoreProvider>
       </body>
     </html>

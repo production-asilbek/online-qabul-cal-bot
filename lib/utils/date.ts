@@ -5,14 +5,20 @@ import {
   parseISO,
   startOfDay,
   startOfWeek,
+  type Locale,
 } from "date-fns";
 
 export const TIMEZONE = "Asia/Tashkent";
 
-export function greetingForHour(hour: number) {
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+export function greetingForHour(
+  hour: number,
+  morning = "Xayrli tong",
+  afternoon = "Xayrli kun",
+  evening = "Xayrli kech",
+) {
+  if (hour < 12) return morning;
+  if (hour < 17) return afternoon;
+  return evening;
 }
 
 export function formatTime(value: Date | string) {
@@ -20,19 +26,19 @@ export function formatTime(value: Date | string) {
   return format(date, "HH:mm");
 }
 
-export function formatLongDate(value: Date | string) {
+export function formatLongDate(value: Date | string, locale?: Locale) {
   const date = typeof value === "string" ? parseISO(value) : value;
-  return format(date, "EEEE, MMMM d");
+  return format(date, "EEEE, d MMMM", { locale });
 }
 
-export function formatShortDate(value: Date | string) {
+export function formatShortDate(value: Date | string, locale?: Locale) {
   const date = typeof value === "string" ? parseISO(value) : value;
-  return format(date, "MMM d");
+  return format(date, "d MMM", { locale });
 }
 
-export function formatDayHeading(value: Date | string) {
+export function formatDayHeading(value: Date | string, locale?: Locale) {
   const date = typeof value === "string" ? parseISO(value) : value;
-  return format(date, "EEE d").toUpperCase();
+  return format(date, "EEE d", { locale }).toUpperCase();
 }
 
 export function toDateInput(value: Date | string) {

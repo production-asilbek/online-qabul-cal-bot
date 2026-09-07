@@ -15,9 +15,11 @@ import {
 } from "@/lib/services/businesses";
 import { REMINDER_OPTIONS } from "@/lib/utils/format";
 import { haptic } from "@/lib/telegram";
+import { useI18n } from "@/lib/i18n/provider";
 
 export default function SettingsPage() {
   useAppStore();
+  const { t } = useI18n();
   const business = getCurrentBusiness();
   const settings = getBusinessSettings();
   const [name, setName] = useState(business.name);
@@ -48,7 +50,7 @@ export default function SettingsPage() {
               const checked = offsets.includes(option.minutes);
               return (
                 <label key={option.minutes} className="flex items-center justify-between">
-                  <span>{option.label}</span>
+                  <span>{t[option.key]}</span>
                   <input
                     type="checkbox"
                     className="h-5 w-5"

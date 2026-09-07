@@ -30,8 +30,8 @@ export async function POST(request: Request) {
     await sendMessage(
       message.chat.id,
       keyboard
-        ? `Hello${message.from?.first_name ? `, ${message.from.first_name}` : ""}.\n\nOpen <b>Qabul Kalendarim</b> to see today's appointments.`
-        : "The Mini App URL is not configured yet. Set NEXT_PUBLIC_APP_URL to your HTTPS address.",
+        ? `Salom${message.from?.first_name ? `, ${message.from.first_name}` : ""}.\n\n<b>Qabul Kalendarim</b> — Open ni bosing.`
+        : "Mini App URL sozlanmagan.",
       keyboard ? { reply_markup: keyboard } : undefined,
     );
   }

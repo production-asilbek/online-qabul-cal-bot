@@ -9,15 +9,22 @@ import { useAppStore } from "@/lib/hooks/use-store";
 import { getTodayAppointments } from "@/lib/services/appointments";
 import { getCurrentBusiness, getCurrentUser } from "@/lib/services/businesses";
 import { greetingForHour } from "@/lib/utils/date";
+import { useI18n } from "@/lib/i18n/provider";
 import { useRouter } from "next/navigation";
 
 export default function TodayPage() {
   useAppStore();
+  const { t, dateLocale } = useI18n();
   const router = useRouter();
   const user = getCurrentUser();
   const business = getCurrentBusiness();
   const appointments = getTodayAppointments();
-  const greeting = greetingForHour(new Date().getHours());
+  const greeting = greetingForHour(
+    new Date().getHours(),
+    t.greetingMorning,
+    t.greetingAfternoon,
+    t.greetingEvening,
+  );
 
   return (
     <main className="px-4 pb-8 pt-6">
@@ -25,15 +32,17 @@ export default function TodayPage() {
       <h1 className="mt-1 text-[28px] font-semibold tracking-tight">
         {greeting}, {user.firstName}
       </h1>
-      <p className="mt-1 text-[var(--tg-subtitle-text-color)]">{format(new Date(), "EEEE, MMMM d")}</p>
+      <p className="mt-1 text-[var(--tg-subtitle-text-color)]">
+        {format(new Date(), "EEEE, d MMMM", { locale: dateLocale })}
+      </p>
 
       <div className="mt-8">
-        <SectionHeader title="Today's appointments" />
+        <SectionHeader title={t.todayAppointments} />
         {appointments.length === 0 ? (
           <EmptyState
-            title="Your day is clear."
-            subtitle="Book the first visit for today."
-            actionLabel="+ Book appointment"
+            title={t.todayClearTitle}
+            subtitle={t.todayClearSubtitle}
+            actionLabel={`+ ${t.bookAppointment}`}
             onAction={() => router.push("/appointments/new")}
           />
         ) : (
