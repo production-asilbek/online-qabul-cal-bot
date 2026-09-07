@@ -23,14 +23,16 @@ export default function ClientProfilePage() {
   const { t, dateLocale } = useI18n();
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const client = getClient(params.id);
+  const clientId = params.id;
+  const client = getClient(clientId);
   const tags = client ? getClientTags(client.id) : [];
   const history = client ? getClientAppointments(client.id) : [];
   const next = history.find((item) => ["scheduled", "confirmed"].includes(item.appointment.status));
 
   useEffect(() => {
-    if (client) track("client_viewed", client.id);
-  }, [client]);
+    if (!clientId) return;
+    track("client_viewed", clientId);
+  }, [clientId]);
 
   if (!client) {
     return (

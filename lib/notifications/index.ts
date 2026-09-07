@@ -1,8 +1,7 @@
 export {
   getNotificationProvider,
-  renderTemplate,
   sendNotification,
   sendSMS,
-  SYSTEM_TEMPLATES,
 } from "./service";
+export { renderTemplate, SYSTEM_TEMPLATES } from "./templates";
 export type { NotificationPayload, NotificationProvider, NotificationResult } from "./types";

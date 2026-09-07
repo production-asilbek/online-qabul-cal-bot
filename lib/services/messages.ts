@@ -1,6 +1,7 @@
 import { formatISO } from "date-fns";
 import { mockStore } from "@/lib/mock/store";
-import { sendNotification, renderTemplate } from "@/lib/notifications/service";
+import { renderTemplate } from "@/lib/notifications/templates";
+import type { NotificationResult } from "@/lib/notifications/types";
 import { getCurrentBusiness } from "@/lib/services/businesses";
 import { getClient } from "@/lib/services/clients";
 import { formatLongDate, formatTime } from "@/lib/utils/date";
@@ -14,6 +15,44 @@ function db() {
 
 function nowIso() {
   return formatISO(new Date());
+}
+
+async function deliver(channel: MessageChannel, to: string, content: string): Promise<NotificationResult> {
+  if (channel === "sms") {
+    const response = await fetch("/api/sms/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: to, message: content }),
+    });
+    const json = (await response.json()) as NotificationResult & { error?: string };
+    if (!response.ok && !json.status) {
+      return {
+        success: false,
+        messageId: crypto.randomUUID(),
+        status: "failed",
+        provider: "eskiz",
+        error: json.error ?? "SMS send failed",
+      };
+    }
+    return json;
+  }
+
+  if (!to) {
+    return {
+      success: false,
+      messageId: crypto.randomUUID(),
+      status: "failed",
+      provider: "telegram",
+      error: "Client has no Telegram ID",
+    };
+  }
+
+  return {
+    success: true,
+    messageId: `tg_${crypto.randomUUID()}`,
+    status: "queued",
+    provider: "telegram",
+  };
 }
 
 export function getTemplates() {
@@ -88,13 +127,7 @@ export async function sendMessage(input: {
     ? String(client.telegramId ?? client.telegramUsername ?? "")
     : client.phone;
 
-  const result = await sendNotification({
-    channel: input.channel,
-    to,
-    content,
-    businessId: db().currentBusinessId,
-    clientId: client.id,
-  });
+  const result = await deliver(input.channel, to, content);
 
   const nextStatus: MessageStatus = result.success ? result.status : "failed";
 

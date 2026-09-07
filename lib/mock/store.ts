@@ -1,31 +1,25 @@
-import { isPlaceholderGoogleName } from "@/lib/auth/identity";
 import type { DatabaseSnapshot } from "@/types";
-import { createSeed } from "./seed";
+import { createEmptyWorkspace } from "./seed";
 
-function repairPlaceholderGoogleNames(data: DatabaseSnapshot) {
-  const seedUser = createSeed().users[0];
-  for (const user of data.users) {
-    const full = `${user.firstName} ${user.lastName ?? ""}`.trim();
-    if (isPlaceholderGoogleName(user.firstName) || isPlaceholderGoogleName(full)) {
-      user.firstName = seedUser.firstName;
-      user.lastName = seedUser.lastName;
-    }
-  }
-}
-
-const STORAGE_KEY = "stom-assistant-db-v1";
+type AccountProfile = { id: string; name: string; givenName?: string };
 
 type Listener = () => void;
+
+function storageKey(accountId: string) {
+  return `stom-assistant-db-v2:${accountId}`;
+}
 
 class MockStore {
   private data: DatabaseSnapshot | null = null;
   private listeners = new Set<Listener>();
   private hydrated = false;
+  private accountId: string | null = null;
+  private profile: AccountProfile | null = null;
   version = 0;
 
   get snapshot(): DatabaseSnapshot {
     if (!this.data) {
-      this.data = createSeed();
+      this.data = createEmptyWorkspace({ id: "anon", name: "User" });
     }
     return this.data;
   }
@@ -34,29 +28,50 @@ class MockStore {
     return this.hydrated;
   }
 
+  get currentAccountId() {
+    return this.accountId;
+  }
+
   hydrate() {
-    if (this.hydrated) return;
+    this.switchAccount(this.accountId ?? "anon", this.profile ?? undefined);
+  }
+
+  switchAccount(accountId: string, profile?: AccountProfile) {
+    if (this.hydrated && this.accountId === accountId && this.data) {
+      this.profile = profile ?? this.profile;
+      return;
+    }
+
+    if (typeof window !== "undefined" && this.hydrated && this.data && this.accountId) {
+      this.persist();
+    }
+
+    this.accountId = accountId;
+    this.profile = profile ?? { id: accountId, name: "User" };
+
     if (typeof window === "undefined") {
-      this.data = createSeed();
+      this.data = createEmptyWorkspace(this.profile);
       this.hydrated = true;
-      this.version += 1;
+      this.emit();
       return;
     }
 
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      this.data = raw ? (JSON.parse(raw) as DatabaseSnapshot) : createSeed();
-      if (raw && this.data) repairPlaceholderGoogleNames(this.data);
+      const raw = window.localStorage.getItem(storageKey(accountId));
+      this.data = raw
+        ? (JSON.parse(raw) as DatabaseSnapshot)
+        : createEmptyWorkspace(this.profile);
     } catch {
-      this.data = createSeed();
+      this.data = createEmptyWorkspace(this.profile);
     }
+
     this.hydrated = true;
-    this.version += 1;
     this.persist();
+    this.emit();
   }
 
   reset() {
-    this.data = createSeed();
+    this.data = createEmptyWorkspace(this.profile ?? { id: this.accountId ?? "anon", name: "User" });
     this.persist();
     this.emit();
   }
@@ -73,8 +88,8 @@ class MockStore {
   }
 
   private persist() {
-    if (typeof window === "undefined" || !this.data) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+    if (typeof window === "undefined" || !this.data || !this.accountId) return;
+    window.localStorage.setItem(storageKey(this.accountId), JSON.stringify(this.data));
   }
 
   private emit() {

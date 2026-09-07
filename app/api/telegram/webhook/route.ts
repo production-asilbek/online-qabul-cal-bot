@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     await sendMessage(
       message.chat.id,
       keyboard
-        ? `Salom${message.from?.first_name ? `, ${message.from.first_name}` : ""}.\n\n<b>Qabul Kalendarim</b> — Open ni bosing.`
+        ? `Salom${message.from?.first_name ? `, ${message.from.first_name}` : ""} ☀️\n\nQabul Kalendaringizni Ochish uchun pastdagi Open tugmasiga bosing.`
         : "Mini App URL sozlanmagan.",
       keyboard ? { reply_markup: keyboard } : undefined,
     );

@@ -43,7 +43,7 @@ function RegisterInner() {
 
   useEffect(() => {
     if (!ready) return;
-    if (user && isRegistrationComplete()) {
+    if (user && isRegistrationComplete(user.id)) {
       router.replace("/");
       return;
     }
@@ -76,7 +76,7 @@ function RegisterInner() {
     if (!name) return;
     setLocale(chosen);
     finishRegistration(name);
-    completeRegistration(name);
+    if (user) completeRegistration(name, user.id);
     haptic("success");
     router.replace("/");
   };

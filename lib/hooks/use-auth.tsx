@@ -1,8 +1,6 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { isDemoGoogleUser } from "@/lib/auth/identity";
-import { applyGoogleProfile } from "@/lib/services/businesses";
 import type { SessionUser } from "@/lib/auth/session";
 
 const AuthContext = createContext<{
@@ -23,9 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await fetch("/api/auth/me", { cache: "no-store" });
     const json = (await response.json()) as { user: SessionUser | null };
     setUser(json.user);
-    if (json.user && !isDemoGoogleUser(json.user)) {
-      applyGoogleProfile(json.user.name);
-    }
     setReady(true);
   }, []);
 

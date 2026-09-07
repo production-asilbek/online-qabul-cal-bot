@@ -1,15 +1,10 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { isDemoGoogleUser } from "@/lib/auth/identity";
+import { useAuth } from "@/lib/hooks/use-auth";
 import { mockStore } from "@/lib/mock/store";
+import { applyGoogleProfile } from "@/lib/services/businesses";
 import { processDueJobs } from "@/lib/services/reminders";
 
 const StoreContext = createContext({ ready: false, version: 0 });
@@ -19,7 +14,6 @@ function subscribe(onChange: () => void) {
 }
 
 function getClientSnapshot() {
-  if (!mockStore.isHydrated) mockStore.hydrate();
   return mockStore.version;
 }
 
@@ -28,13 +22,24 @@ function getServerSnapshot() {
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
+  const { user, ready: authReady } = useAuth();
   const version = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
-  const ready = version > 0;
+  const accountId = user?.id ?? "anon";
 
   useEffect(() => {
-    if (!ready) return;
+    if (!authReady) return;
+    mockStore.switchAccount(accountId, user ?? undefined);
+    if (user && !isDemoGoogleUser(user)) {
+      applyGoogleProfile(user.name);
+    }
+  }, [authReady, accountId, user]);
+
+  const ready = authReady && mockStore.isHydrated && mockStore.currentAccountId === accountId;
+
+  useEffect(() => {
+    if (!ready || !user) return;
     void processDueJobs();
-  }, [ready]);
+  }, [ready, user]);
 
   const value = useMemo(() => ({ ready, version }), [ready, version]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

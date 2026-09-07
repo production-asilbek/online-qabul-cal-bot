@@ -79,7 +79,7 @@ export class SmsNotificationProvider implements NotificationProvider {
   private readonly inner = new MockSmsProvider();
 
   get name() {
-    return eskizConfigured() && process.env.SMS_PROVIDER !== "mock" ? "eskiz" : "mock-sms";
+    return eskizConfigured() ? "eskiz" : "mock-sms";
   }
 
   async send(payload: NotificationPayload): Promise<NotificationResult> {

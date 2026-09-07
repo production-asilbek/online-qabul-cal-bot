@@ -21,7 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready || !authReady) return;
     const onRegister = pathname.startsWith("/register");
-    const registered = isRegistrationComplete();
+    const registered = isRegistrationComplete(user?.id);
     if (!user && !onRegister) {
       router.replace("/register");
       return;

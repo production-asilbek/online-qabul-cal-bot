@@ -1,17 +1,19 @@
-const STORAGE_KEY = "stom-registration-v1";
-
 export type RegistrationState = {
   complete: boolean;
   serviceName?: string;
 };
 
 const listeners = new Set<() => void>();
-let cached: RegistrationState = { complete: false };
+const cache = new Map<string, RegistrationState>();
 
-function read(): RegistrationState {
+function storageKey(accountId: string) {
+  return `stom-registration-v1:${accountId}`;
+}
+
+function read(accountId: string): RegistrationState {
   if (typeof window === "undefined") return { complete: false };
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey(accountId));
     if (!raw) return { complete: false };
     const parsed = JSON.parse(raw) as RegistrationState;
     return { complete: Boolean(parsed.complete), serviceName: parsed.serviceName };
@@ -20,15 +22,18 @@ function read(): RegistrationState {
   }
 }
 
-export function getRegistration() {
-  cached = read();
-  return cached;
+export function getRegistration(accountId: string | null | undefined): RegistrationState {
+  if (!accountId) return { complete: false };
+  const state = read(accountId);
+  cache.set(accountId, state);
+  return state;
 }
 
-export function completeRegistration(serviceName: string) {
-  cached = { complete: true, serviceName };
+export function completeRegistration(serviceName: string, accountId: string) {
+  const state = { complete: true, serviceName };
+  cache.set(accountId, state);
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cached));
+    window.localStorage.setItem(storageKey(accountId), JSON.stringify(state));
   }
   listeners.forEach((listener) => listener());
 }
@@ -38,6 +43,6 @@ export function subscribeRegistration(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-export function isRegistrationComplete() {
-  return getRegistration().complete;
+export function isRegistrationComplete(accountId: string | null | undefined) {
+  return getRegistration(accountId).complete;
 }

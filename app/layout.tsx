@@ -40,13 +40,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
-        <StoreProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <StoreProvider>
             <LanguageProvider>
               <AppShell>{children}</AppShell>
             </LanguageProvider>
-          </AuthProvider>
-        </StoreProvider>
+          </StoreProvider>
+        </AuthProvider>
       </body>
     </html>
   );

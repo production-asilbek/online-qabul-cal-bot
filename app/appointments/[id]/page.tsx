@@ -32,11 +32,13 @@ export default function AppointmentDetailPage() {
   const { t, dateLocale } = useI18n();
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const display = getAppointment(params.id);
+  const appointmentId = params.id;
+  const display = getAppointment(appointmentId);
 
   useEffect(() => {
-    if (display) track("appointment_viewed", display.appointment.id);
-  }, [display]);
+    if (!appointmentId) return;
+    track("appointment_viewed", appointmentId);
+  }, [appointmentId]);
 
   if (!display) {
     return (

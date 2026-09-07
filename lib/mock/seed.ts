@@ -1,5 +1,5 @@
 import { addDays, addHours, addMinutes, formatISO, setHours, setMinutes, startOfDay, subDays } from "date-fns";
-import { SYSTEM_TEMPLATES } from "@/lib/notifications/service";
+import { SYSTEM_TEMPLATES } from "@/lib/notifications/templates";
 import type { DatabaseSnapshot } from "@/types";
 
 export const IDS = {
@@ -32,36 +32,133 @@ function at(day: Date, hours: number, minutes: number) {
   return formatISO(setMinutes(setHours(day, hours), minutes));
 }
 
+function defaultWorkingHours(businessId: string) {
+  return [1, 2, 3, 4, 5]
+    .map((weekday) => ({
+      id: `wh_${weekday}`,
+      businessId,
+      weekday,
+      isClosed: false,
+      ranges: [{ start: "09:00", end: "18:00" }],
+      breaks: [{ start: "13:00", end: "14:00" }],
+    }))
+    .concat([
+      {
+        id: "wh_6",
+        businessId,
+        weekday: 6,
+        isClosed: false,
+        ranges: [{ start: "10:00", end: "15:00" }],
+        breaks: [],
+      },
+      {
+        id: "wh_0",
+        businessId,
+        weekday: 0,
+        isClosed: true,
+        ranges: [],
+        breaks: [],
+      },
+    ]);
+}
+
+function splitName(name: string, givenName?: string) {
+  const source = (givenName || name).trim() || "Owner";
+  const [first, ...rest] = source.split(/\s+/);
+  const lastFromName = name.trim().split(/\s+/).slice(1).join(" ");
+  return {
+    firstName: first,
+    lastName: rest.join(" ") || lastFromName,
+  };
+}
+
+export function createEmptyWorkspace(account: { id: string; name: string; givenName?: string }): DatabaseSnapshot {
+  const createdAt = formatISO(new Date());
+  const safeId = account.id.replace(/[^a-zA-Z0-9_-]/g, "") || "account";
+  const userId = `user_${safeId}`;
+  const businessId = `biz_${safeId}`;
+  const staffId = `staff_${safeId}`;
+  const { firstName, lastName } = splitName(account.name, account.givenName);
+
+  return {
+    currentUserId: userId,
+    currentBusinessId: businessId,
+    users: [
+      {
+        id: userId,
+        telegramId: 0,
+        firstName,
+        lastName,
+        languageCode: "uz",
+        createdAt,
+        updatedAt: createdAt,
+      },
+    ],
+    businesses: [
+      {
+        id: businessId,
+        name: "",
+        type: "other",
+        category: "medical service",
+        timezone: "Asia/Tashkent",
+        currency: "USD",
+        onboardingComplete: false,
+        createdAt,
+        updatedAt: createdAt,
+      },
+    ],
+    members: [{ id: `mem_${safeId}`, businessId, userId, role: "owner", createdAt }],
+    tags: [
+      { id: `tag_regular_${safeId}`, businessId, name: "Regular", color: "#187ACC" },
+      { id: `tag_vip_${safeId}`, businessId, name: "VIP", color: "#C9A227" },
+      { id: `tag_new_${safeId}`, businessId, name: "New", color: "#2A9D8F" },
+    ],
+    clients: [],
+    clientTags: [],
+    services: [],
+    staff: [
+      {
+        id: staffId,
+        businessId,
+        userId,
+        firstName,
+        lastName,
+        title: "Owner",
+        color: "#187ACC",
+        active: true,
+        createdAt,
+        updatedAt: createdAt,
+      },
+    ],
+    staffServices: [],
+    workingHours: defaultWorkingHours(businessId),
+    holidays: [],
+    appointments: [],
+    appointmentNotes: [],
+    appointmentStatusHistory: [],
+    templates: SYSTEM_TEMPLATES.map((template, index) => ({
+      id: `tpl_${index + 1}`,
+      businessId,
+      name: template.name,
+      channel: "sms" as const,
+      content: template.content,
+      isSystem: true,
+    })),
+    messages: [],
+    messageLogs: [],
+    notificationJobs: [],
+    analyticsEvents: [],
+    settings: [{ businessId, reminderOffsetsMin: [1440, 60], defaultChannel: "sms" }],
+    subscriptions: [{ id: `sub_${safeId}`, businessId, plan: "free", status: "active", createdAt }],
+  };
+}
+
 export function createSeed(): DatabaseSnapshot {
   const now = new Date();
   const today = startOfDay(now);
   const createdAt = formatISO(now);
 
-  const workingHours = [1, 2, 3, 4, 5].map((weekday) => ({
-    id: `wh_${weekday}`,
-    businessId: IDS.business,
-    weekday,
-    isClosed: false,
-    ranges: [{ start: "09:00", end: "18:00" }],
-    breaks: [{ start: "13:00", end: "14:00" }],
-  })).concat([
-    {
-      id: "wh_6",
-      businessId: IDS.business,
-      weekday: 6,
-      isClosed: false,
-      ranges: [{ start: "10:00", end: "15:00" }],
-      breaks: [],
-    },
-    {
-      id: "wh_0",
-      businessId: IDS.business,
-      weekday: 0,
-      isClosed: true,
-      ranges: [],
-      breaks: [],
-    },
-  ]);
+  const workingHours = defaultWorkingHours(IDS.business);
 
   return {
     currentUserId: IDS.user,
